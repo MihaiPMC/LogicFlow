@@ -4,11 +4,28 @@ import { parser } from './parser.js'
 import { evaluateNode } from './evaluator.js'
 import { lexer } from './lexer.js'
 export async function interpretor(sourceCode, outputToConsole, maxIterations, isAIassisted) {
+    // Create a custom output function that handles newlines appropriately
+    let buffer = '';
+    const handleOutput = (text, addNewline = false) => {
+        if (addNewline) {
+            // When a newline is requested, output the buffer and then clear it
+            outputToConsole(buffer, true);
+            buffer = '';
+        } else {
+            // Add text to the buffer
+            buffer += text;
+        }
+    };
+    
     try {
         let tokens = lexer(sourceCode);
         let ast = parser(tokens);
         let variables = {};
-        evaluateNode(ast, variables, outputToConsole, maxIterations);
+        evaluateNode(ast, variables, handleOutput, maxIterations);
+        // If there's anything left in the buffer at the end, output it
+        if (buffer.length > 0) {
+            outputToConsole(buffer, true);
+        }
         return 0;
     } catch (err) {
         if (isAIassisted) {
@@ -18,7 +35,7 @@ export async function interpretor(sourceCode, outputToConsole, maxIterations, is
                 let tokens = lexer(sourceCode);
                 let ast = parser(tokens);
                 let variables = {};
-                evaluateNode(ast, variables, outputToConsole, maxIterations);
+                evaluateNode(ast, variables, handleOutput, maxIterations);
                 return sourceCode;
             } catch (err) {
                 throw new Error(`${err.message} \n Refactored code: ${refactoredCode}`);
@@ -170,3 +187,4 @@ const refactorAllCode = async (code) => {
     const data = await response.json();
     return data.choices[0].message.content;
 }
+

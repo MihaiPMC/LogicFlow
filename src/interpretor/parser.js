@@ -90,7 +90,6 @@ export function parser(tokens) {
                             continue
                         }
                         else {
-                            // Avem o expresie
                             let expression = []
                             let valid_expression = false
                             while (i < vars.length && vars[i].type !== 'COMMA' && vars[i].type !== 'NEWLINE' && vars[i].type !== 'EOF' && vars[i].type !== 'RBRACE' && vars[i].type !== 'LBRACE' && vars[i].type !== 'KEYWORD') {
@@ -105,6 +104,7 @@ export function parser(tokens) {
                                 expression.push(vars[i])
                                 i ++
                             }
+                            i--; // Adjust for loop increment
                             if (valid_expression || expression.length === 1) {
                                 let postfixExpression = shuntingYard(expression)
                                 instructions.push(new Node('OUTPUTEXP', postfixExpression))
@@ -114,6 +114,7 @@ export function parser(tokens) {
                             }
                         }
                     }
+                    instructions.push(new Node('NEWLINE'));
                 }
                 else if ( currToken.value === 'daca' ) {
                     let {condition, thenBlock, elseBlock} = parseDaca(tokens)
@@ -127,7 +128,7 @@ export function parser(tokens) {
                         elseNode = parser(elseBlock)
                     }
                     let postFixCondition = shuntingYard(condition)
-                    console.log(postFixCondition)
+                   // console.log(postFixCondition)
                     let IFNode = new ifNode(postFixCondition, thenNode, elseNode)
                     instructions.push(new Node('IF', IFNode))
                 }
@@ -637,3 +638,4 @@ function parseSingleStatement(tokens) {
     eatNewlines(tokens)
     return block
 }
+

@@ -1,4 +1,3 @@
-
 export function evaluateNode(node, variables, outputToConsole, MAX_ITERATIONS) {
     if (!node) return
     if (node.type === 'PROGRAM') {
@@ -18,15 +17,18 @@ export function evaluateNode(node, variables, outputToConsole, MAX_ITERATIONS) {
         if (variables[node.value] === undefined) {
             throw new Error(`Variabila "${node.value}" nu a fost definita!`)
         }
-        outputToConsole(variables[node.value].toString())
+        outputToConsole(variables[node.value].toString(), false) // Don't add newline
     } 
     else if (node.type === 'OUTPUTEXP') {
         let value = evaluatePostfixExpression(node.value, variables)
         value = value.toString()
-        outputToConsole(value)
+        outputToConsole(value, false) // Don't add newline
     }
     else if (node.type === 'OUTPUTSTR') {
-        outputToConsole(node.value)
+        outputToConsole(node.value, false) // Don't add newline
+    }
+    else if (node.type === 'NEWLINE') {
+        outputToConsole('', true) // Force a newline
     }
     else if (node.type === 'ASSIGNMENT') {
         variables[node.value] = evaluatePostfixExpression(node.children, variables)
