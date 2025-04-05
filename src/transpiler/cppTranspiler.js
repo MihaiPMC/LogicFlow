@@ -18,29 +18,71 @@ export function generateCPP(ast) {
     
     // Colectăm variabilele și generăm codul pentru fiecare instrucțiune
     if (ast && ast.children) {
-        // Colectăm variabilele
         collectVariables(ast, variables);
         
-        // Declarăm variabilele la început
-        if (variables.size > 0) {
-            
+        if (variables.size > 0) {        
             for (const variable of variables) {
                 code += `    int ${variable};\n`;
             }
             code += '\n';
         }
         
-        // Generăm codul pentru fiecare instrucțiune
-        for (const node of ast.children) {
-            code += transpileNode(node, 1); // Începem cu indentare de nivel 1
+        // Parcurgem nodurile AST și grupăm nodurile de output
+        for (let i = 0; i < ast.children.length; i++) {
+            const node = ast.children[i];
+            if (isOutputNode(node)) {
+                let outputs = [];
+                // Grupați nodurile consecutive de output
+                while (i < ast.children.length && isOutputNode(ast.children[i])) {
+                    outputs.push(ast.children[i]);
+                    i++;
+                }
+                // Dacă există un NEWLINE imediat după grup, sarim peste el
+                if (i < ast.children.length && ast.children[i].type === 'NEWLINE') {
+                    i++;
+                }
+                code += transpileOutputGroup(outputs, 1);
+                i--; // Ajustăm pentru ciclul for
+            } else if (node.type === 'NEWLINE') {
+                code += getIndentation(1) + "cout << endl;\n";
+            } else {
+                code += transpileNode(node, 1);
+            }
         }
     }
     
-    // Adăugăm return la final
     code += '    return 0;\n';
     code += '}\n';
     
     return code;
+}
+
+function isOutputNode(node) {
+    return node.type === 'OUTPUT' || node.type === 'OUTPUTSTR' || node.type === 'OUTPUTEXP';
+}
+
+function transpileOutputGroup(nodes, indentLevel) {
+    const indent = getIndentation(indentLevel);
+    const parts = [];
+    // Parcurgem nodurile de output și le transformăm corespunzător
+    for (const node of nodes) {
+        if (node.type === 'OUTPUT') {
+            parts.push(node.value);
+        } else if (node.type === 'OUTPUTSTR') {
+            parts.push(`"${node.value}"`);
+        } else if (node.type === 'OUTPUTEXP') {
+            if (node.children && node.children.length > 0) {
+                parts.push(transpileExpression(node.children));
+            } else if (node.value) {
+                if (Array.isArray(node.value)) {
+                    parts.push(transpileExpression(node.value));
+                } else {
+                    parts.push(node.value);
+                }
+            }
+        }
+    }
+    return `${indent}cout << ${parts.join(' << ')} << endl;\n`;
 }
 
 function collectVariables(node, variables) {
