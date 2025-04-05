@@ -6,6 +6,8 @@ import SettingsOverlay from "./components/SettingsOverlay";
 import InstructionsOverlay from "./components/InstructionsOverlay";
 import CppOutputEditor from "./components/CppOutputEditor";
 import { interpretor } from "./interpretor/interpretor";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   // Starea codului pseudocod
@@ -32,8 +34,22 @@ function App() {
   const [maxIterations, setMaxIterations] = useState(
     localStorage.getItem("maxIterations") || "1000"
   );
+  // Starea pentru modul AI asistat
+  const [AIassisted, setAIassisted] = useState(
+    localStorage.getItem("AIassisted") === "true" || false
+  );
   // Starea pentru a indica dacă codul rulează
   const [isRunning, setIsRunning] = useState(false);
+  // Starea pentru culoarea textului în consolă
+  const [textColor, setTextColor] = useState("white");
+
+  const updateSettings = (theme, fontSize, wordWrap, maxIterations, AIassisted) => {
+    setEditorTheme(theme);
+    setFontSize(fontSize);
+    setWordWrap(wordWrap);
+    setMaxIterations(maxIterations);
+    setAIassisted(AIassisted);
+  };
 
   const handleRun = () => {
     // Salvează codul în localStorage
@@ -42,6 +58,7 @@ function App() {
     // Reinițializează output-ul și setează flag-ul de rulare
     setOutput([]);
     setIsRunning(true);
+    setTextColor("white");
 
     // Funcție care adaugă output la consolă
     const outputToConsole = (text) => {
@@ -50,17 +67,31 @@ function App() {
 
     try {
       // Execută interpretorul cu un timeout scurt pentru a permite reactualizarea interfeței
-      setTimeout(() => {
+      setTimeout(async () => {
         try {
-          interpretor(code, outputToConsole, parseInt(maxIterations, 10));
+          const refactoredCode = await interpretor(code, outputToConsole, parseInt(maxIterations, 10), AIassisted);
+          
+          if (refactoredCode !== 0) {
+            toast.info("Codul tau pare sa aiba erori, dar au fost corectate de AI!", {
+              position: "bottom-right",
+              autoClose: 3000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              theme: "light",
+            });
+          }
         } catch (error) {
           outputToConsole(`Eroare: ${error.message}`);
+          setTextColor("red");
         } finally {
           setIsRunning(false);
         }
       }, 50);
     } catch (error) {
       outputToConsole(`Eroare neașteptată: ${error.message}`);
+      setTextColor("red");
       setIsRunning(false);
     }
   };
@@ -71,7 +102,8 @@ function App() {
     localStorage.setItem("editorTheme", editorTheme);
     localStorage.setItem("wordWrap", wordWrap);
     localStorage.setItem("maxIterations", maxIterations);
-  }, [fontSize, editorTheme, wordWrap, maxIterations]);
+    localStorage.setItem("AIassisted", AIassisted);
+  }, [fontSize, editorTheme, wordWrap, maxIterations, AIassisted]);
 
   return (
     <div>
@@ -104,7 +136,7 @@ function App() {
             </div>
           </div>
           
-          <OutputConsole output={output} />
+          <OutputConsole output={output} textColor={textColor} />
         </div>
       </div>
 
@@ -113,19 +145,29 @@ function App() {
         <SettingsOverlay
           onClose={() => setShowSettings(false)}
           fontSize={fontSize}
-          setFontSize={setFontSize}
           editorTheme={editorTheme}
-          setEditorTheme={setEditorTheme}
           wordWrap={wordWrap}
-          setWordWrap={setWordWrap}
           maxIterations={maxIterations}
-          setMaxIterations={setMaxIterations}
+          updateSettings={updateSettings}
         />
       )}
 
       {showInstructions && (
         <InstructionsOverlay onClose={() => setShowInstructions(false)} />
       )}
+      
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </div>
   );
 }

@@ -255,15 +255,15 @@ export function parser(tokens) {
                 let varName = currToken.value
                 if (tokens.length > 0 && tokens[0].type === 'ASSIGN') {
                     tokens.shift()
-                    
+
                     let expression = []
                     while (tokens.length > 0 && tokens[0].type !== 'NEWLINE') {
                         expression.push(tokens.shift())
                     }
-                    
+
                     // Transformam expresia din forma infixata in forma postfixata
                     let postfixExpression = shuntingYard(expression)
-            
+
                     // Cream nodul de atribuire si il adaugam in lista
                     instructions.push(new Node("ASSIGNMENT", varName, postfixExpression))
                 }
@@ -280,7 +280,7 @@ export function parser(tokens) {
 function shuntingYard(tokens) {
 
     function precedence(op) {
-        if (op === 'not') return 6 
+        if (op === 'not') return 6
         if (op === '*' || op === '/' || op === '%') return 5
         if (op === '+' || op === '-') return 4
         if (op === '>' || op === '<' || op === '>=' || op === '<=') return 3
@@ -320,7 +320,7 @@ function shuntingYard(tokens) {
             while (stack.length > 0 && stack[stack.length - 1].type !== 'LSQUAREBRACE') {
                 output.push(stack.pop())
             }
-            stack.pop() 
+            stack.pop()
             output.push(new Token('OPERATOR', 'int'))
         }
         else if (token.type === 'LPAREN') {
@@ -345,58 +345,62 @@ function parseDaca(tokens) {
     let condition = [];
     let thenBlock = [];
     let elseBlock = [];
-  
+
     eatNewlines(tokens);
     // Citim condiția până la token-ul "atunci" sau până la o acoladă
     while (tokens.length > 0 && tokens[0].value !== 'atunci' && tokens[0].type !== 'LBRACE') {
-      if (tokens[0].value === '=') {
-        tokens.shift(); // Sărim peste '='
-        condition.push(new Token('OPERATOR', 'egal'));
-      } else {
-        condition.push(tokens.shift());
-      }
+        if (tokens[0].value === '=') {
+            tokens.shift(); // Sărim peste '='
+            condition.push(new Token('OPERATOR', 'egal'));
+        } else {
+            condition.push(tokens.shift());
+        }
     }
-  
+
     // Partea "atunci"
     if (tokens[0] && tokens[0].value === 'atunci') {
-      tokens.shift(); // Sărim peste "atunci"
-      eatNewlines(tokens);
-      if (tokens[0] && tokens[0].value !== '{') {
-        // Fără acolade → o singură instrucțiune (posibil imbricată)
-        thenBlock = parseSingleStatement(tokens);
-      } else if (tokens[0] && tokens[0].value === '{') {
-        tokens.shift(); // Sărim peste '{'
-        thenBlock = parseBracedBlock(tokens);
-      }
+        tokens.shift(); // Sărim peste "atunci"
+        eatNewlines(tokens);
+        if (tokens[0] && tokens[0].value !== '{') {
+            // Fără acolade → o singură instrucțiune (posibil imbricată)
+            thenBlock = parseSingleStatement(tokens);
+        } else if (tokens[0] && tokens[0].value === '{') {
+            tokens.shift(); // Sărim peste '{'
+            thenBlock = parseBracedBlock(tokens);
+        }
     }
-  
+
     eatNewlines(tokens);
     // Partea "altfel", dacă există
     if (tokens[0] && tokens[0].value === 'altfel') {
-      tokens.shift(); // Sărim peste "altfel"
-      eatNewlines(tokens);
-      if (tokens[0] && tokens[0].value !== '{') {
-        elseBlock = parseSingleStatement(tokens);
-      } else if (tokens[0] && tokens[0].value === '{') {
-        tokens.shift(); // Sărim peste '{'
-        elseBlock = parseBracedBlock(tokens);
-      }
+        tokens.shift(); // Sărim peste "altfel"
+        eatNewlines(tokens);
+        if (tokens[0] && tokens[0].value !== '{') {
+            elseBlock = parseSingleStatement(tokens);
+        } else if (tokens[0] && tokens[0].value === '{') {
+            tokens.shift(); // Sărim peste '{'
+            elseBlock = parseBracedBlock(tokens);
+        }
     }
-    console.log("Then bloc gasit!")
-    for ( let tk of thenBlock ) {
-        console.log(tk.value)
+    // // console.log("Then bloc gasit!")
+    // for ( let tk of thenBlock ) {
+    //     console.log(tk.value)
+    // }
+    // // console.log("Else bloc gasit!")
+    // for ( let tk of elseBlock ) {
+    //     console.log(tk.value)
+    // }
+    if (condition.length === 0 || thenBlock.length === 0 || (condition.length === 0 && thenBlock.length === 0 && elseBlock.length !== 0)) {
+        throw new Error('Sintaxa pentru "daca" este invalida')
     }
-    console.log("Else bloc gasit!")
-    for ( let tk of elseBlock ) {
-        console.log(tk.value)
-    }
+
     return { condition, thenBlock, elseBlock };
 }
 
 function parseCatTimp(tokens) {
     let condition = [];
     let thenBlock = [];
-  
+
     eatNewlines(tokens);
     // Citim condiția până la token-ul "executa" sau o acoladă
     while (tokens.length > 0 && tokens[0].value !== 'executa' && tokens[0].type !== 'LBRACE') {
@@ -407,14 +411,17 @@ function parseCatTimp(tokens) {
         condition.push(tokens.shift());
     }
     if (tokens[0] && tokens[0].value === 'executa') {
-      tokens.shift(); // Sărim peste "executa"
-      eatNewlines(tokens);
-      if (tokens[0] && tokens[0].value !== '{') {
-        thenBlock = parseSingleStatement(tokens);
-      } else if (tokens[0] && tokens[0].value === '{') {
-        tokens.shift(); // Sărim peste '{'
-        thenBlock = parseBracedBlock(tokens);
-      }
+        tokens.shift(); // Sărim peste "executa"
+        eatNewlines(tokens);
+        if (tokens[0] && tokens[0].value !== '{') {
+            thenBlock = parseSingleStatement(tokens);
+        } else if (tokens[0] && tokens[0].value === '{') {
+            tokens.shift(); // Sărim peste '{'
+            thenBlock = parseBracedBlock(tokens);
+        }
+    }
+    if (condition.length === 0 || thenBlock.length === 0) {
+        throw new Error('Sintaxa pentru "cat timp" este invalida')
     }
     return { condition, thenBlock };
 }
@@ -445,10 +452,13 @@ function parsePentru (tokens) {
         eatNewlines(tokens)
         thenBlock.push(...parseBracedBlock(tokens))
     }
-    console.log("Bloc gasit!")
-    for ( let tk of thenBlock ) {
-        console.log(tk.value)
+    if (!found_condition || !found_then) {
+        throw new Error('Sintaxa pentru "pentru" este invalida')
     }
+    // console.log("Bloc gasit!")
+    // for ( let tk of thenBlock ) {
+    //     console.log(tk.value)
+    // }
     return {condition, thenBlock}
 }
 
@@ -459,7 +469,7 @@ function parseRepeta (tokens) {
 
     let repetas = 1
     while (tokens.length > 0 && repetas > 0 && tokens[0].type !== 'EOF' ) {
-        if (tokens[0].value === 'repeta') 
+        if (tokens[0].value === 'repeta')
             repetas ++
         else if (tokens[0].value === 'pana cand') {
             repetas --
@@ -482,6 +492,9 @@ function parseRepeta (tokens) {
             condition.push(tokens.shift())
         }
         found_condition = true
+    }
+    if (!found_condition || !found_then) {
+        throw new Error('Sintaxa pentru "repeta" este invalida')
     }
     return {condition, thenBlock}
 }
@@ -574,7 +587,7 @@ function parseStatement(tokens) {
     if (isBlockKeyword(token.value)) {
         let keyword = tokens.shift() // Consumă cuvântul cheie
         let statement = []
-        
+
         if (keyword.value === 'pentru') {
             statement = getPentru(tokens)
         }
