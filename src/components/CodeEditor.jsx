@@ -6,6 +6,7 @@ import AISolutionButton from "./AISolutionButton";
 const CodeEditor = ({ onCodeChange, fontSize, editorTheme, wordWrap, refactoredCode }) => {
   const editorRef = useRef();
   const [monaco, setMonaco] = useState(null);
+  const [currentCode, setCurrentCode] = useState(localStorage.getItem("code") || "// Scrie pseudocod aici");
 
   function handleEditorMount(editor, monacoInstance) {
     editorRef.current = editor;
@@ -102,14 +103,22 @@ const CodeEditor = ({ onCodeChange, fontSize, editorTheme, wordWrap, refactoredC
 
     // Trigger initial code change to populate the C++ view
     const initialCode = localStorage.getItem("code") || "// Scrie pseudocod aici";
+    setCurrentCode(initialCode);
     onCodeChange(initialCode);
   }
 
   const handleApplySolution = (solution) => {
     if (editorRef.current) {
       editorRef.current.setValue(solution);
+      setCurrentCode(solution);
       onCodeChange(solution);
     }
+  };
+
+  const handleEditorChange = (value) => {
+    setCurrentCode(value);
+    onCodeChange(value);
+    localStorage.setItem("code", value);
   };
 
   useEffect(() => {
@@ -127,6 +136,7 @@ const CodeEditor = ({ onCodeChange, fontSize, editorTheme, wordWrap, refactoredC
     <div className="relative">
       {refactoredCode && (
         <AISolutionButton 
+          originalCode={currentCode}
           refactoredCode={refactoredCode} 
           onApplySolution={handleApplySolution}
         />
@@ -137,7 +147,7 @@ const CodeEditor = ({ onCodeChange, fontSize, editorTheme, wordWrap, refactoredC
         defaultLanguage="pseudocode"
         defaultValue={localStorage.getItem("code") || "// Scrie pseudocod aici"}
         onMount={handleEditorMount}
-        onChange={(value) => {onCodeChange(value); localStorage.setItem("code", value);}}
+        onChange={handleEditorChange}
         options={{
           automaticLayout: true, // Ensure the editor resizes automatically
           padding: { top: 20 }, // Add padding to the top

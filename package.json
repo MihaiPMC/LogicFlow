@@ -14,6 +14,7 @@
     "@emotion/styled": "^11.14.0",
     "@monaco-editor/react": "^4.7.0-rc.0",
     "@tailwindcss/vite": "^4.0.6",
+    "diff": "^5.2.0",
     "frame": "^1.0.0-alpha.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
