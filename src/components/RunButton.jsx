@@ -1,28 +1,15 @@
-import { useState, useEffect } from "react";
+import React from 'react';
+
 const RunButton = ({ runCode }) => {
-
-  const [buttonText, setButtonText] = useState(window.innerWidth < 768 ? "▶" : "Run ▶");
-
-  useEffect(() => {
-    const handleResize = () => {
-      setButtonText(window.innerWidth < 768 ? "▶" : "Run ▶");
-    };
-
-    window.addEventListener("resize", handleResize);
-    
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
-
   return (
     <button
-      className="inline-block py-2 px-6 font-mono font-bold text-neutral-100 bg-green-600 m-4 rounded-2xl hover:cursor-pointer hover:bg-green-700 transition-all duration-150 w-44"
-      onClick={runCode}
+    className="inline-block bg-green-500 hover:bg-green-600 py-2 px-6 font-mono font-bold text-neutral-100 m-4 rounded-2xl hover:cursor-pointer transition-all duration-150 w-44"
+    onClick={runCode}
     >
-      {buttonText} 
+      <span className="hidden sm:inline">Rulează</span>
+      <span className="ml-1">▶</span>
     </button>
   );
 };
 
-export default RunButton
+export default RunButton;
