@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 
-const OutputConsole = ({ output }) => {
+const OutputConsole = ({ output, textColor }) => {
   const consoleEndRef = useRef(null);
 
   // Auto-scroll la fiecare actualizare a output-ului
@@ -11,20 +11,22 @@ const OutputConsole = ({ output }) => {
   }, [output]);
 
   return (
-    <div className="mt-4 p-4 bg-gray-800 rounded-md h-[20vh] overflow-y-auto text-white font-mono">
-      <div className="text-lg font-bold border-b border-gray-700 mb-2 text-green-400">Output:</div>
-      {output.length === 0 ? (
-        <p className="text-gray-400">Rulați codul pentru a vedea rezultatele aici</p>
-      ) : (
-        <div className="space-y-1">
-          {output.map((line, index) => (
-            <div key={index} className="whitespace-pre-wrap">
-              &gt; {line}
+    <div className="mt-4">
+      <h2 className="text-xl font-bold text-white mb-2">Consolă</h2>
+      <div className="bg-gray-900 rounded p-4 h-[20vh] overflow-auto">
+        {output.length === 0 ? (
+          <p className="text-gray-400">Rulează codul pentru a vedea rezultatul...</p>
+        ) : (
+          <>
+            <div className={`font-mono text-${textColor}`}>
+              {output.map((line, index) => (
+                <div key={index}>{line}</div>
+              ))}
             </div>
-          ))}
-          <div ref={consoleEndRef} />
-        </div>
-      )}
+            <div ref={consoleEndRef} />
+          </>
+        )}
+      </div>
     </div>
   );
 };

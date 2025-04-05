@@ -126,6 +126,7 @@ function App() {
                 fontSize={fontSize}
                 editorTheme={editorTheme}
                 wordWrap={wordWrap}
+                refactoredCode={refactoredCode}
               />
             </div>
 
@@ -141,7 +142,10 @@ function App() {
             </div>
           </div>
           
-          <OutputConsole output={output} textColor={textColor} />
+          <OutputConsole 
+            output={output} 
+            textColor={textColor} 
+          />
         </div>
       </div>
 
