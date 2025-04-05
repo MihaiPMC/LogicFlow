@@ -4,14 +4,17 @@ import { lexer } from '../interpretor/lexer';
 import { parser } from '../interpretor/parser';
 import { generateCPP } from '../transpiler/cppTranspiler';
 
-const CppOutputEditor = ({ pseudocode, fontSize, editorTheme, wordWrap }) => {
+const CppOutputEditor = ({ pseudocode, refactoredCode, fontSize, editorTheme, wordWrap }) => {
   const [cppCode, setCppCode] = useState('// Codul C++ va apărea aici');
 
   useEffect(() => {
     try {
+      // Transpilăm codul refactorizat dacă există, altfel pseudocodul original
+      const codeToTranspile = refactoredCode || pseudocode;
+      
       // Transpilăm codul doar dacă avem pseudocod
-      if (pseudocode && pseudocode.trim() !== '') {
-        const tokens = lexer(pseudocode);
+      if (codeToTranspile && codeToTranspile.trim() !== '') {
+        const tokens = lexer(codeToTranspile);
         const ast = parser(tokens);
         const generatedCode = generateCPP(ast);
         setCppCode(generatedCode);
@@ -22,7 +25,7 @@ const CppOutputEditor = ({ pseudocode, fontSize, editorTheme, wordWrap }) => {
       setCppCode(`// Eroare în transpilare:\n// ${error.message}`);
       console.error('Eroare de transpilare:', error);
     }
-  }, [pseudocode]);
+  }, [pseudocode, refactoredCode]);
 
   return (
     <div className="h-full">

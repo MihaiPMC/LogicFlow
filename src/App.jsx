@@ -42,6 +42,8 @@ function App() {
   const [isRunning, setIsRunning] = useState(false);
   // Starea pentru culoarea textului în consolă
   const [textColor, setTextColor] = useState("white");
+  // Starea pentru codul refactorat de AI
+  const [refactoredCode, setRefactoredCode] = useState(null);
 
   const updateSettings = (theme, fontSize, wordWrap, maxIterations, AIassisted) => {
     setEditorTheme(theme);
@@ -59,6 +61,7 @@ function App() {
     setOutput([]);
     setIsRunning(true);
     setTextColor("white");
+    setRefactoredCode(null); // Resetează codul refactorat
 
     // Funcție care adaugă output la consolă
     const outputToConsole = (text) => {
@@ -69,9 +72,10 @@ function App() {
       // Execută interpretorul cu un timeout scurt pentru a permite reactualizarea interfeței
       setTimeout(async () => {
         try {
-          const refactoredCode = await interpretor(code, outputToConsole, parseInt(maxIterations, 10), AIassisted);
+          const result = await interpretor(code, outputToConsole, parseInt(maxIterations, 10), AIassisted);
           
-          if (refactoredCode !== 0) {
+          if (result && result !== 0) {
+            setRefactoredCode(result);
             toast.info("Codul tau pare sa aiba erori, dar au fost corectate de AI!", {
               position: "bottom-right",
               autoClose: 3000,
@@ -128,7 +132,8 @@ function App() {
             <div className="w-1/2">
               <h2 className="text-xl font-bold text-white mb-2">Cod C++ generat</h2>
               <CppOutputEditor 
-                pseudocode={code} 
+                pseudocode={code}
+                refactoredCode={refactoredCode}
                 fontSize={fontSize}
                 editorTheme={editorTheme}
                 wordWrap={wordWrap}
