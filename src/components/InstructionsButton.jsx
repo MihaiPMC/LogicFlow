@@ -18,8 +18,8 @@ const InstructionsButton = ({ openInfo }) => {
 
   return (
     <button
-      className="inline-block md:ml-auto bg-slate-800 hover:bg-slate-900 py-2 px-6 font-mono font-bold text-neutral-100 m-4 rounded-2xl hover:cursor-pointer transition-all duration-150 w-44"
-      onClick={openInfo}
+    className="inline-block bg-slate-500 hover:bg-slate-600 py-2 px-6 font-mono font-bold text-neutral-100 m-4 rounded-2xl hover:cursor-pointer transition-all duration-150 w-44"
+    onClick={openInfo}
     >
       {buttonText}
     </button>
