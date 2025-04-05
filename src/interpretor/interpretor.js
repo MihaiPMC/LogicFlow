@@ -1,4 +1,3 @@
-const OPENAI_API_KEY = 'sk-proj'
 const URL = 'https://api.openai.com/v1/chat/completions'
 
 import { parser } from './parser.js'
@@ -30,6 +29,9 @@ export async function interpretor(sourceCode, outputToConsole, maxIterations, is
         }
     }
 }
+
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+
 
 const refactorAllCode = async (code) => {
     const prompt = `Esti un asistent AI care are scopul de a asista elevii de liceu in interpretarea pseudocodului.
