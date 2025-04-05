@@ -1,109 +1,133 @@
+import { useState, useEffect } from "react";
 import CodeEditor from "./components/CodeEditor";
 import OutputConsole from "./components/OutputConsole";
 import NavBar from "./components/NavBar";
-import { useState, useEffect, use } from "react";
-import { interpretor } from "./interpretor/interpretor";
 import SettingsOverlay from "./components/SettingsOverlay";
 import InstructionsOverlay from "./components/InstructionsOverlay";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-const App = () => {
-  const [code, setCode] = useState("");
-  const [output, setOutput] = useState("");
-  const [textColor, setTextColor] = useState("white");
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(false);
+import CppOutputEditor from "./components/CppOutputEditor";
+import { interpretor } from "./interpretor/interpretor";
 
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
-  const [fontSize, setFontSize] = useState(localStorage.getItem("fontSize") || "16");
-  const [wordWrap, setWordWrap] = useState(localStorage.getItem("wordWrap") === "true");
-  const [maxIterations, setMaxIterations] = useState(localStorage.getItem("maxIterations") || 100000);
-  const [AIassisted, setAIassisted] = useState(localStorage.getItem("AIassisted") === "true");
-  const updateSettings = (theme, fontSize, wordWrap, maxIterations, AIassisted) => {
-    setTheme(theme);
-    setFontSize(fontSize);
-    setWordWrap(wordWrap);
-    setMaxIterations(maxIterations);
-    setAIassisted(AIassisted);
-  }
+function App() {
+  // Starea codului pseudocod
+  const [code, setCode] = useState(localStorage.getItem("code") || "");
+  // Starea pentru output-ul de la interpretor
+  const [output, setOutput] = useState([]);
+  // Starea pentru overlay-ul de setări
+  const [showSettings, setShowSettings] = useState(false);
+  // Starea pentru overlay-ul cu instrucțiuni
+  const [showInstructions, setShowInstructions] = useState(false);
+  // Starea pentru mărimea fontului
+  const [fontSize, setFontSize] = useState(
+    localStorage.getItem("fontSize") || "14"
+  );
+  // Starea pentru tema editorului
+  const [editorTheme, setEditorTheme] = useState(
+    localStorage.getItem("editorTheme") || "dark"
+  );
+  // Starea pentru word wrap
+  const [wordWrap, setWordWrap] = useState(
+    localStorage.getItem("wordWrap") === "true" || false
+  );
+  // Starea pentru limitarea iterațiilor
+  const [maxIterations, setMaxIterations] = useState(
+    localStorage.getItem("maxIterations") || "1000"
+  );
+  // Starea pentru a indica dacă codul rulează
+  const [isRunning, setIsRunning] = useState(false);
 
-  useEffect(() => {
-    localStorage.setItem("theme", theme);
-    localStorage.setItem("fontSize", fontSize);
-    localStorage.setItem("wordWrap", wordWrap);
-    localStorage.setItem("maxIterations", maxIterations);
-    localStorage.setItem("AIassisted", AIassisted);
-  }, [theme, fontSize, wordWrap, maxIterations, AIassisted]);
+  const handleRun = () => {
+    // Salvează codul în localStorage
+    localStorage.setItem("code", code);
 
-  const handleOpenSettings = () => {setSettingsOpen(true)};
-  const handleCloseSettings = () => {setSettingsOpen(false)};
+    // Reinițializează output-ul și setează flag-ul de rulare
+    setOutput([]);
+    setIsRunning(true);
 
-  const handleOpenInfo = () => {setInfoOpen(true)};
-  const handleCloseInfo = () => {setInfoOpen(false)};
+    // Funcție care adaugă output la consolă
+    const outputToConsole = (text) => {
+      setOutput((prevOutput) => [...prevOutput, text]);
+    };
 
-  useEffect(() => {
-    setCode(localStorage.getItem("code"));
-  }, [code]);
-
-  const outputToConsole = (text) => {
-    for ( let i = 0; i < text.length; i ++ ) {
-      if ( text[i] === "\\" && text[i + 1] === 'n' ) {
-        setOutput((prevOutput) => prevOutput + "\n");
-        i ++;
-      }
-      else {
-        setOutput((prevOutput) => prevOutput + text[i]);
-      }
-    }
-  }
-
-  const runCode = async () => {
-    let refactoredCode = 0;
     try {
-      setOutput("");
-      setTextColor("white");
-      refactoredCode = await interpretor(code, outputToConsole, maxIterations, AIassisted);
-    } catch (err) {
-      setTextColor("red");
-      setOutput("Eroare la interpretare: " + err.message);
-    } finally {
-      if (refactoredCode !== 0) {
-        toast.info("Codul tau pare sa aive erori, dar au fost corectate de AI!", {
-          position: "bottom-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          theme: "light",
-        });
-      }
+      // Execută interpretorul cu un timeout scurt pentru a permite reactualizarea interfeței
+      setTimeout(() => {
+        try {
+          interpretor(code, outputToConsole, parseInt(maxIterations, 10));
+        } catch (error) {
+          outputToConsole(`Eroare: ${error.message}`);
+        } finally {
+          setIsRunning(false);
+        }
+      }, 50);
+    } catch (error) {
+      outputToConsole(`Eroare neașteptată: ${error.message}`);
+      setIsRunning(false);
     }
   };
 
+  // Salvează preferințele utilizatorului în localStorage
+  useEffect(() => {
+    localStorage.setItem("fontSize", fontSize);
+    localStorage.setItem("editorTheme", editorTheme);
+    localStorage.setItem("wordWrap", wordWrap);
+    localStorage.setItem("maxIterations", maxIterations);
+  }, [fontSize, editorTheme, wordWrap, maxIterations]);
+
   return (
-    <>
-      <NavBar runCode={runCode} openSettings={handleOpenSettings} openInfo={handleOpenInfo} />
-      <div className="w-full h-auto px-6 py-8 text-gray-800 flex flex-col gap-2">
-        <CodeEditor onCodeChange={setCode} fontSize={fontSize} editorTheme={theme} wordWrap={wordWrap} />
-        <OutputConsole output={output} textColor = {textColor}/>
-      </div>
-      {settingsOpen && <SettingsOverlay onClose={handleCloseSettings} updateSettings={updateSettings} />}
-      {infoOpen && <InstructionsOverlay onClose={handleCloseInfo} />}
-      <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
+    <div>
+      <NavBar 
+        runCode={handleRun} 
+        openSettings={() => setShowSettings(true)} 
+        openInfo={() => setShowInstructions(true)} 
       />
-    </>
+      <div className="container mx-auto mt-4 mb-4">
+        <div className="flex flex-col space-y-4">
+          <div className="flex space-x-4">
+            <div className="w-1/2">
+              <h2 className="text-xl font-bold text-white mb-2">Pseudocod</h2>
+              <CodeEditor
+                onCodeChange={setCode}
+                fontSize={fontSize}
+                editorTheme={editorTheme}
+                wordWrap={wordWrap}
+              />
+            </div>
+
+            <div className="w-1/2">
+              <h2 className="text-xl font-bold text-white mb-2">Cod C++ generat</h2>
+              <CppOutputEditor 
+                pseudocode={code} 
+                fontSize={fontSize}
+                editorTheme={editorTheme}
+                wordWrap={wordWrap}
+              />
+            </div>
+          </div>
+          
+          <OutputConsole output={output} />
+        </div>
+      </div>
+
+      {/* Overlay-uri pentru setări și instrucțiuni */}
+      {showSettings && (
+        <SettingsOverlay
+          onClose={() => setShowSettings(false)}
+          fontSize={fontSize}
+          setFontSize={setFontSize}
+          editorTheme={editorTheme}
+          setEditorTheme={setEditorTheme}
+          wordWrap={wordWrap}
+          setWordWrap={setWordWrap}
+          maxIterations={maxIterations}
+          setMaxIterations={setMaxIterations}
+        />
+      )}
+
+      {showInstructions && (
+        <InstructionsOverlay onClose={() => setShowInstructions(false)} />
+      )}
+    </div>
   );
-};
+}
 
 export default App;

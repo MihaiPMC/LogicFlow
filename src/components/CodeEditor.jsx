@@ -94,6 +94,10 @@ const CodeEditor = ({ onCodeChange, fontSize, editorTheme, wordWrap }) => {
     } else if (editorTheme === "dark") {
       monaco.editor.setTheme("pseudocode-dark-theme");
     }
+
+    // Trigger initial code change to populate the C++ view
+    const initialCode = localStorage.getItem("code") || "// Scrie pseudocod aici";
+    onCodeChange(initialCode);
   }
 
   useEffect(() => {
