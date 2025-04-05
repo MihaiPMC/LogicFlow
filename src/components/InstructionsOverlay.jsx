@@ -11,8 +11,8 @@ const InstructionsOverlay = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 flex justify-center items-center z-20 bg-gray-900 backdrop-blur-3xl opacity-90" onClick={handleBackdropClick}>
-      <div className="bg-gray-100 p-8 rounded-lg shadow-lg w-[90%] md:w-1/2 z-30 max-h-[80vh] overflow-y-auto relative">
+    <div className="fixed inset-0 flex justify-center items-center z-20 bg-black/70 backdrop-blur-md" onClick={handleBackdropClick}>
+      <div className="bg-gray-100/95 backdrop-blur-sm p-8 rounded-lg shadow-lg w-[90%] md:w-1/2 z-30 max-h-[80vh] overflow-y-auto relative">
         <button 
           className="absolute top-2 right-3 text-gray-600 hover:text-red-600 text-xl font-bold"
           onClick={onClose}
