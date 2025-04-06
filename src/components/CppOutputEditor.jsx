@@ -6,9 +6,13 @@ import { generateCPP } from '../transpiler/cppTranspiler';
 
 const CppOutputEditor = ({ pseudocode, refactoredCode, fontSize, editorTheme, wordWrap, onCppCodeChange }) => {
   const [cppCode, setCppCode] = useState('// Codul C++ va apărea aici');
+  const [transpileError, setTranspileError] = useState(null);
 
   useEffect(() => {
     try {
+      // Reset error state
+      setTranspileError(null);
+      
       // Transpilăm codul refactorizat dacă există, altfel pseudocodul original
       const codeToTranspile = refactoredCode || pseudocode;
       
@@ -33,19 +37,18 @@ const CppOutputEditor = ({ pseudocode, refactoredCode, fontSize, editorTheme, wo
         }
       }
     } catch (error) {
-      const errorMessage = `// Eroare în transpilare:\n// ${error.message}`;
-      setCppCode(errorMessage);
+      setCppCode(`// Eroare în transpilare:\n// ${error.message}`);
       console.error('Eroare de transpilare:', error);
-      
-      // Pass the error message to the parent component
-      if (onCppCodeChange) {
-        onCppCodeChange(errorMessage);
-      }
     }
   }, [pseudocode, refactoredCode, onCppCodeChange]);
 
   return (
     <div className="h-full">
+      {transpileError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 mb-2 rounded">
+          <strong>Eroare de transpilare:</strong> {transpileError.message}
+        </div>
+      )}
       <Editor
         className="h-[50vh]"
         theme={editorTheme === "light" ? "vs" : "vs-dark"}

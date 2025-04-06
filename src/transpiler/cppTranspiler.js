@@ -330,6 +330,15 @@ function transpileExpression(tokens) {
         else if (token.type === 'STRING') {
             stack.push('"' + token.value + '"');
         }
+        else if (token.type === 'LSQUAREBRACE') {
+            stack.push(token); // Push the bracket onto the stack
+        }
+        else if (token.type === 'RSQUAREBRACE') {
+            // Resolve the indexing
+            let index = stack.pop();
+            let base = stack.pop();
+            stack.push(base + "[" + index + "]");
+        }
         else if (token.type === 'OPERATOR') {
             // Convertim operatorii din pseudocod în operatori C++
             const operator = mapOperator(token.value);
