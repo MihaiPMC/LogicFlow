@@ -490,27 +490,35 @@ function parsePentru (tokens) {
     while (tokens.length > 0 && tokens[0].value !== 'executa' && tokens[0].type !== 'LBRACE') {
         condition.push(tokens.shift())
     }
-    found_condition = true
+    found_condition = condition.length > 0
 
-    if (tokens[0].value === 'executa') {
+    if (tokens.length > 0 && tokens[0].value === 'executa') {
         tokens.shift() //Sari peste executa
         eatNewlines(tokens)
         // E posibil sa fie un for scris pe o linie: pentru <conditie> executa <instr1>
-        if (tokens[0].value !== '{') {
+        if (tokens.length > 0 && tokens[0].value !== '{') {
             eatNewlines(tokens)
             // Daca nu avem acolade, atunci avem doar o singura instructiune
             thenBlock = parseSingleStatement(tokens)
-            found_then = true
+            found_then = thenBlock.length > 0
         }
     }
-    if (tokens[0].value === '{' && !found_then) {
-        thenBlock.push(tokens.shift()) //Sari peste {
+    
+    if (tokens.length > 0 && tokens[0].type === 'LBRACE') {
+        tokens.shift() //Sari peste {
         eatNewlines(tokens)
-        thenBlock.push(...parseBracedBlock(tokens))
+        thenBlock = parseBracedBlock(tokens)
+        found_then = true
     }
-    if (!found_condition || !found_then) {
-        throw new Error('Sintaxa pentru "pentru" este invalida')
+    
+    if (!found_condition) {
+        throw new Error('Sintaxa pentru "pentru": lipsește condiția')
     }
+    
+    if (!found_then) {
+        throw new Error('Sintaxa pentru "pentru": lipsește blocul de instrucțiuni după "executa"')
+    }
+    
     return {condition, thenBlock}
 }
 
