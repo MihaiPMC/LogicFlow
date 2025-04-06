@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+/* Apply Inter font to the body but exclude the monaco editor */
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Keep monaco editor with its default font */
+.monaco-editor {
+  font-family: Consolas, "Courier New", monospace;
+}

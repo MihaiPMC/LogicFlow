@@ -20,7 +20,16 @@ const NavBar = ({ runCode, openSettings, openInfo }) => {
   
   return (
     <div className="bg-gradient-to-r from-cyan-950 via-cyan-700 to-cyan-950 text-white p-4 flex justify-between items-center sticky top-0 z-10 shadow-md shadow-black">
-        {showTitle && <h1 className="font-mono font-extrabold text-2xl md:text-4xl mr-6">LogicFlow</h1>}
+        {showTitle && (
+          <div className="flex items-center">
+            <img 
+              src="/src/assets/favicon.ico" 
+              alt="LogicFlow logo" 
+              className="w-20 h-20 mr-2" 
+            />
+            <h1 className="font-inter font-extrabold text-2xl md:text-4xl">LogicFlow</h1>
+          </div>
+        )}
         <div className="flex justify-end items-center ml-auto">
           <InstructionsButton openInfo={openInfo} />
           <SettingsButton openSettings={openSettings} />

@@ -21,23 +21,23 @@ const SettingsOverlay = ({
           >
             X
           </button>
-          <h2 className="text-2xl font-mono font-extrabold mb-4 underline">
+          <h2 className="text-2xl font-extrabold mb-4 underline">
             Setări
           </h2>
 
           <form className="flex flex-col gap-4">
-            <label className="text-lg font-bold inline-block font-mono">Temă editor text:</label>
+            <label className="text-lg font-bold inline-block">Temă editor text:</label>
             <select
-                className="p-2 rounded-lg inline-block border border-gray-300 bg-gray-200 font-mono"
+                className="p-2 rounded-lg inline-block border border-gray-300 bg-gray-200"
                 defaultValue={editorTheme || "dark"}
             >
               <option value="light">Light</option>
               <option value="dark">Dark</option>
             </select>
 
-            <label className="inline-block text-lg font-mono font-bold ">Dimensiune font:</label>
+            <label className="inline-block text-lg font-bold">Dimensiune font:</label>
             <select
-                className="p-2 rounded-lg inline-block border border-gray-300 bg-gray-200 font-mono"
+                className="p-2 rounded-lg inline-block border border-gray-300 bg-gray-200"
                 defaultValue={fontSize || "14"}
             >
               <option value="12">12px</option>
@@ -47,38 +47,38 @@ const SettingsOverlay = ({
               <option value="20">20px</option>
             </select>
 
-            <label className="inline-block text-lg font-mono font-bold ">Word wrapping:</label>
+            <label className="inline-block text-lg font-bold">Word wrapping:</label>
             <div className="flex items-center">
               <input 
                 type="checkbox" 
                 className="rounded-lg mr-2 size-4" 
                 defaultChecked={wordWrap}
               />
-              <span className="font-mono">Da</span>
+              <span>Da</span>
             </div>
 
-            <label className="inline-block text-lg font-mono font-bold">
+            <label className="inline-block text-lg font-bold">
               Numar maxim de iteratii per structură repetitivă pana la iesire fortată: (pentru a evita buclele infinite)
             </label>
             <input
                 type="number"
-                className="p-2 rounded-lg border border-gray-300 bg-gray-200 font-mono"
+                className="p-2 rounded-lg border border-gray-300 bg-gray-200"
                 defaultValue={maxIterations || "1000"}
             />
 
-            <label className="inline-block text-lg font-mono font-bold ">Interpretare asistata de AI:</label>
+            <label className="inline-block text-lg font-bold">Interpretare asistata de AI:</label>
             <div className="flex items-center">
               <input 
                 type="checkbox" 
                 className="rounded-lg mr-2 size-4" 
                 defaultChecked={localStorage.getItem('AIassisted') === 'true'}
               />
-              <span className="font-mono">Da</span>
+              <span>Da</span>
             </div>
 
             <button
                 type="button"
-                className="py-2 px-4 font-mono font-black bg-green-500 text-white rounded hover:bg-green-600 transition-all duration-500 hover:cursor-pointer"
+                className="py-2 px-4 font-black bg-green-500 text-white rounded hover:bg-green-600 transition-all duration-500 hover:cursor-pointer"
                 onClick={(e) => {
                   e.preventDefault();
                   const theme = document.querySelectorAll("select")[0].value;
@@ -95,7 +95,7 @@ const SettingsOverlay = ({
             </button>
           </form>
           <button
-              className="mt-4 py-2 px-4 font-mono font-black bg-red-500 text-white rounded hover:bg-red-700 transition-all duration-500 hover:cursor-pointer"
+              className="mt-4 py-2 px-4 font-black bg-red-500 text-white rounded hover:bg-red-700 transition-all duration-500 hover:cursor-pointer"
               onClick={onClose}
           >
             Închide

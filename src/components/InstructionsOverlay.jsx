@@ -19,11 +19,11 @@ const InstructionsOverlay = ({ onClose }) => {
         >
           X
         </button>
-        <h2 className="text-2xl font-mono font-extrabold mb-4 underline">
+        <h2 className="text-2xl font-extrabold mb-4 underline">
             Instrucțiuni
           </h2>
 
-          <h3 className="text-lg font-mono font-bold mt-4">Observatie! Nu exista tipuri, insa o variabila poate avea ca valoare numai un numar intreg sau rational.</h3>
+          <h3 className="text-lg font-bold mt-4">Observatie! Nu exista tipuri, insa o variabila poate avea ca valoare numai un numar intreg sau rational.</h3>
 
           <InstructionsTitle text="1. Instrucțiunea de atribuire" />
           <InstructionsParagraph text='Variabilele pot fi atribuite cu un număr întreg sau rațional prin "=" sau "<-".' />
@@ -64,7 +64,7 @@ const InstructionsOverlay = ({ onClose }) => {
 
         
         <button
-          className="mt-4 py-2 px-4 font-mono font-black bg-red-500 text-white rounded hover:bg-red-700 transition-all duration-500 hover:cursor-pointer"
+          className="mt-4 py-2 px-4 font-black bg-red-500 text-white rounded hover:bg-red-700 transition-all duration-500 hover:cursor-pointer"
           onClick={onClose}
         >
           Închide
