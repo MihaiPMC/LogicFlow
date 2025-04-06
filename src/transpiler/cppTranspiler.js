@@ -13,17 +13,19 @@ export function generateCPP(ast) {
         collectVariables(ast, variables);
     }
     
-    // Verificăm dacă există variabile de tip string
+    // Verificăm dacă există variabile de tip string și vector
     const hasStringVariables = Array.from(variables.values()).includes('string');
+    const hasVectorVariables = Array.from(variables.values()).includes('vector');
 
     // Adăugăm header-ele necesare
     code += '#include <iostream>\n';
     if (hasStringVariables) {
         code += '#include <string>\n';
     }
-    // code += '#include <cmath>\n';
-    // code += '#include <vector>\n\n';
-    code += 'using namespace std;\n\n';
+    if (hasVectorVariables) {
+        code += '#include <vector>\n';
+    }
+    code += '\nusing namespace std;\n\n';
     code += 'int main() {\n';
     
     // Generăm declarațiile de variabile
