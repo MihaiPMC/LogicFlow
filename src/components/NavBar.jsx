@@ -20,7 +20,7 @@ const NavBar = ({ runCode, openSettings, openInfo, cppCode }) => {
   }, []);
   
   return (
-    <div className="bg-gradient-to-r from-cyan-950 via-cyan-700 to-cyan-950 text-white p-4 flex justify-between items-center sticky top-0 z-10 shadow-md shadow-black">
+    <div className="bg-gradient-to-r from-orange-600 via-cyan-700 to-green-400 text-white p-4 flex justify-between items-center sticky top-0 z-10 shadow-md shadow-black">
         {showTitle && (
           <div className="flex items-center">
             <img 
@@ -32,10 +32,10 @@ const NavBar = ({ runCode, openSettings, openInfo, cppCode }) => {
           </div>
         )}
         <div className="flex justify-end items-center space-x-4 ml-auto">
-          <ComplexityButton cppCode={cppCode} />
+          <RunButton runCode={runCode}/>
           <InstructionsButton openInfo={openInfo} />
           <SettingsButton openSettings={openSettings} />
-          <RunButton runCode={runCode}/>
+          <ComplexityButton cppCode={cppCode} />
         </div>
     </div>
   )
