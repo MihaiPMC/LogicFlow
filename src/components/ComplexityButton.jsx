@@ -25,30 +25,34 @@ const ComplexityButton = ({ cppCode }) => {
           messages: [
             {
               role: 'system',
-              content: 'You are an expert in algorithm complexity analysis. Answer very briefly with just the complexity.'
+              content: 'You are an expert in algorithm complexity analysis. Your task is to analyze the time complexity of the provided C++ code. Respond ONLY with the Big O notation (e.g., O(1), O(n), O(n²), O(n log n), O(2^n), etc.) without any additional text or explanation.'
             },
             {
               role: 'user',
-              content: `What is the time complexity for this algorithm? Please only respond with the complexity notation (e.g. O(n), O(n²), O(log n), etc.) and nothing else.\n\n${cppCode}`
+              content: `What is the time complexity for this algorithm? Remember to respond ONLY with the Big O notation.\n\n${cppCode}`
             }
           ],
-          temperature: 0.3,
+          temperature: 0.2,
           max_tokens: 50
         })
       });
 
       const data = await response.json();
-      
+
       if (data.choices && data.choices[0] && data.choices[0].message) {
-        // Extract just the complexity notation (O(...)) from the response
+        // First try to extract just the complexity notation (O(...)) from the response
         const complexityRegex = /O\([^)]+\)/i;
         const match = data.choices[0].message.content.match(complexityRegex);
-        
+
         if (match) {
           setComplexity(match[0]);
         } else {
-          // Use the whole response if we can't extract just the notation
-          setComplexity(data.choices[0].message.content.trim());
+          // If no standard O(...) notation is found, clean up the response
+          // Remove any extra text like "The time complexity is" or periods at the end
+          let cleanedResponse = data.choices[0].message.content.trim();
+          cleanedResponse = cleanedResponse.replace(/^the\s+time\s+complexity\s+is\s+/i, '');
+          cleanedResponse = cleanedResponse.replace(/\.$/, '');
+          setComplexity(cleanedResponse);
         }
       } else {
         throw new Error('Unexpected API response');
