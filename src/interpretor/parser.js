@@ -468,10 +468,6 @@ function parsePentru (tokens) {
     if (!found_condition || !found_then) {
         throw new Error('Sintaxa pentru "pentru" este invalida')
     }
-    // console.log("Bloc gasit!")
-    // for ( let tk of thenBlock ) {
-    //     console.log(tk.value)
-    // }
     return {condition, thenBlock}
 }
 

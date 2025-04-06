@@ -330,14 +330,13 @@ function transpileExpression(tokens) {
         else if (token.type === 'STRING') {
             stack.push('"' + token.value + '"');
         }
-        else if (token.type === 'LSQUAREBRACE') {
-            stack.push(token); // Push the bracket onto the stack
+        else if (token.type === 'LSQUAREBRACE' || token.type === 'LBRACKET') {
+            // Skip brackets as they are handled with the indexing operation
+            continue;
         }
-        else if (token.type === 'RSQUAREBRACE') {
-            // Resolve the indexing
-            let index = stack.pop();
-            let base = stack.pop();
-            stack.push(base + "[" + index + "]");
+        else if (token.type === 'RSQUAREBRACE' || token.type === 'RBRACKET') {
+            // Skip brackets as they are handled with the indexing operation
+            continue;
         }
         else if (token.type === 'OPERATOR') {
             // Convertim operatorii din pseudocod în operatori C++
@@ -353,6 +352,12 @@ function transpileExpression(tokens) {
                 const operand = stack.pop();
                 stack.push(`${operand}`);
             } 
+            else if (operator === 'index') {
+                // Handle array indexing - correctly format as array[index]
+                const index = stack.pop();
+                const array = stack.pop();
+                stack.push(`${array}[${index}]`);
+            }
             else {
                 // Operatori binari
                 const right = stack.pop();
