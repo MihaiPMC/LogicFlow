@@ -298,7 +298,7 @@ function shuntingYard(tokens) {
     while (tokens.length > 0) {
         let token = tokens.shift()
 
-        if (token.type === 'NUMBER' || token.type === 'IDENTIFIER') {
+        if (token.type === 'NUMBER' || token.type === 'IDENTIFIER' || token.type === 'STRING') {
             output.push(token)
         }
         else if (token.type === 'OPERATOR') {

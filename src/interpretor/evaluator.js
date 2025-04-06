@@ -99,6 +99,9 @@ function evaluatePostfixExpression(tokens, variables) {
             }
             stack.push(variables[token.value] ?? 0)
         } 
+        else if (token.type === 'STRING') {
+            stack.push(token.value)
+        }
         else if (token.type === 'OPERATOR') {
             if (token.value === 'not') {
                 let op = stack.pop()
@@ -133,3 +136,4 @@ function evaluatePostfixExpression(tokens, variables) {
     }
     return stack.pop()
 }
+

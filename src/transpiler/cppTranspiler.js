@@ -10,7 +10,7 @@ export function generateCPP(ast) {
 
     // Adăugăm header-ele necesare
     code += '#include <iostream>\n\n';
-    // code += '#include <string>\n';
+    code += '#include <string>\n';
     // code += '#include <cmath>\n';
     // code += '#include <vector>\n\n';
     code += 'using namespace std;\n\n';
@@ -22,7 +22,7 @@ export function generateCPP(ast) {
         
         if (variables.size > 0) {        
             for (const variable of variables) {
-                code += `    int ${variable};\n`;
+                code += `    string ${variable};\n`;
             }
             code += '\n';
         }
@@ -315,6 +315,9 @@ function transpileExpression(tokens) {
         if (token.type === 'NUMBER' || token.type === 'IDENTIFIER') {
             return token.value;
         }
+        if (token.type === 'STRING') {
+            return '"' + token.value + '"';
+        }
     }
     
     // Pentru expresii complexe care folosesc notația postfixată
@@ -324,6 +327,9 @@ function transpileExpression(tokens) {
         if (token.type === 'NUMBER' || token.type === 'IDENTIFIER') {
             stack.push(token.value);
         } 
+        else if (token.type === 'STRING') {
+            stack.push('"' + token.value + '"');
+        }
         else if (token.type === 'OPERATOR') {
             // Convertim operatorii din pseudocod în operatori C++
             const operator = mapOperator(token.value);
@@ -366,3 +372,4 @@ function mapOperator(operator) {
     
     return operatorMap[operator] || operator;
 }
+
