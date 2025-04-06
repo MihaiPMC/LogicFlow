@@ -117,8 +117,6 @@ function transpileOutputGroup(nodes, indentLevel) {
 
 function collectVariables(node, variables) {
     if (!node) return;
-    
-    // Colectăm variabile din asignări și input
     if (node.type === 'ASSIGNMENT') {
         // Check if this is a string assignment
         if (node.children && Array.isArray(node.children)) {
@@ -141,16 +139,16 @@ function collectVariables(node, variables) {
                 variables.set(node.value, 'int'); // Default to int
             }
         }
-    } else if (node.type === 'INPUT') {
+    } 
+    else if (node.type === 'INPUT') {
         if (!variables.has(node.value)) {
             variables.set(node.value, 'int'); // Default to int for input vars
         }
-    } else if (node.type === 'OUTPUT' || node.type === 'OUTPUTSTR' || node.type === 'OUTPUTEXP') {
-        // Check for string output 
-        if (node.type === 'OUTPUTSTR' || (node.value && typeof node.value === 'string')) {
-            // This suggests string handling might be needed
-        }
-    } else if (node.type === 'IF') {
+    }
+    else if (node.type === 'VECTOR_ALLOC' || node.type === 'VECTOR_INIT') {
+        variables.set(node.value, 'vector');
+    }
+    else if (node.type === 'IF') {
         collectVariablesFromBlock(node.value.thenBlock, variables);
         if (node.value.elseBlock) {
             collectVariablesFromBlock(node.value.elseBlock, variables);
@@ -220,6 +218,10 @@ function transpileNode(node, indentLevel, variables) {
             return transpileFor(node, indentLevel, variables);
         case 'DO-WHILE':
             return transpileDoWhile(node, indentLevel, variables);
+        case 'VECTOR_ALLOC':
+            return transpileVectorAlloc(node, indentLevel);
+        case 'VECTOR_INIT':
+            return transpileVectorInit(node, indentLevel);
         default:
             return `${indent}// Nod neprelucrat: ${node.type}\n`;
     }
@@ -389,6 +391,18 @@ function transpileFor(node, indentLevel, variables) {
     code += `${indent}}\n`;
     
     return code;
+}
+
+function transpileVectorAlloc(node, indentLevel) {
+    const indent = getIndentation(indentLevel);
+    const sizeExpr = transpileExpression(node.children);
+    return `${indent}vector<int> ${node.value}(${sizeExpr});\n`;
+}
+
+function transpileVectorInit(node, indentLevel) {
+    const indent = getIndentation(indentLevel);
+    const elements = node.children.elements.map(exprTokens => transpileExpression(exprTokens));
+    return `${indent}vector<int> ${node.value} = { ${elements.join(', ')} };\n`;
 }
 
 function transpileExpression(tokens) {

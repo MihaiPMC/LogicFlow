@@ -273,6 +273,49 @@ export function parser(tokens) {
                     // Cream nodul de atribuire si il adaugam in lista
                     instructions.push(new Node("ASSIGNMENT", varName, postfixExpression))
                 }
+                else if (tokens.length > 0 && tokens[0].type === 'LBRACKET') {
+                    tokens.shift(); // remove '['
+                    let sizeExpr = [];
+                    while (tokens.length > 0 && tokens[0].type !== 'RBRACKET') {
+                        sizeExpr.push(tokens.shift());
+                    }
+                    tokens.shift(); // remove ']'
+                    if (tokens.length > 0 && tokens[0].type === 'ASSIGN') {
+                        tokens.shift(); // remove '='
+                        if (tokens.length > 0 && tokens[0].type === 'LBRACE') {
+                            tokens.shift(); // remove '{'
+                            let elements = [];
+                            let currentElement = [];
+                            while (tokens.length > 0 && tokens[0].type !== 'RBRACE') {
+                                if (tokens[0].type === 'COMMA') {
+                                    elements.push(shuntingYard(currentElement));
+                                    currentElement = [];
+                                    tokens.shift(); // remove comma
+                                } else {
+                                    currentElement.push(tokens.shift());
+                                }
+                            }
+                            if (currentElement.length > 0) {
+                                elements.push(shuntingYard(currentElement));
+                            }
+                            tokens.shift(); // remove '}'
+                            instructions.push(new Node("VECTOR_INIT", varName, { size: shuntingYard(sizeExpr), elements }));
+                        } else {
+                            throw new Error("Expected '{' for vector initialization");
+                        }
+                    } else {
+                        instructions.push(new Node("VECTOR_ALLOC", varName, shuntingYard(sizeExpr)));
+                    }
+                }
+                else if (tokens.length > 0 && tokens[0].type === 'ASSIGN') {
+                    tokens.shift();
+                    let expression = [];
+                    while (tokens.length > 0 && tokens[0].type !== 'NEWLINE') {
+                        expression.push(tokens.shift());
+                    }
+                    let postfixExpression = shuntingYard(expression);
+                    instructions.push(new Node("ASSIGNMENT", varName, postfixExpression));
+                }
             default:
                 break
         }

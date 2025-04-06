@@ -81,6 +81,18 @@ export function evaluateNode(node, variables, outputToConsole, MAX_ITERATIONS) {
             }
         } while (!evaluatePostfixExpression(DO_WHILENode.condition, variables))
     }
+    else if (node.type === 'VECTOR_ALLOC') {
+        let size = evaluatePostfixExpression(node.children, variables);
+        variables[node.value] = new Array(size).fill(0);
+    }
+    else if (node.type === 'VECTOR_INIT') {
+        let size = evaluatePostfixExpression(node.children.size, variables);
+        let vector = new Array(size).fill(0);
+        for (let i = 0; i < node.children.elements.length && i < size; i++) {
+            vector[i] = evaluatePostfixExpression(node.children.elements[i], variables);
+        }
+        variables[node.value] = vector;
+    }
 }
 
 function evaluatePostfixExpression(tokens, variables) {
