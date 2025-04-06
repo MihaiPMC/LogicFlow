@@ -6,7 +6,7 @@ export function generateCPP(ast) {
     if (!ast) return '// Eroare în transpilare: AST invalid';
 
     let code = '';
-    let variables = new Set(); // Pentru declarațiile de variabile
+    let variables = new Map(); // Track variable name → type mapping
 
     // Adăugăm header-ele necesare
     code += '#include <iostream>\n\n';
@@ -20,9 +20,31 @@ export function generateCPP(ast) {
     if (ast && ast.children) {
         collectVariables(ast, variables);
         
-        if (variables.size > 0) {        
-            for (const variable of variables) {
-                code += `    int ${variable};\n`;
+        if (variables.size > 0) {
+            // Group variables by type
+            const stringVars = [];
+            const intVars = [];
+            
+            for (const [variable, type] of variables.entries()) {
+                if (type === 'string') {
+                    stringVars.push(variable);
+                } else {
+                    intVars.push(variable);
+                }
+            }
+            
+            // Declare string variables
+            if (stringVars.length > 0) {
+                for (const variable of stringVars) {
+                    code += `    string ${variable};\n`;
+                }
+            }
+            
+            // Declare int variables
+            if (intVars.length > 0) {
+                for (const variable of intVars) {
+                    code += `    int ${variable};\n`;
+                }
             }
             code += '\n';
         }
@@ -46,7 +68,7 @@ export function generateCPP(ast) {
             } else if (node.type === 'NEWLINE') {
                 code += getIndentation(1) + "cout << endl;\n";
             } else {
-                code += transpileNode(node, 1);
+                code += transpileNode(node, 1, variables);
             }
         }
     }
@@ -90,9 +112,36 @@ function collectVariables(node, variables) {
     
     // Colectăm variabile din asignări și input
     if (node.type === 'ASSIGNMENT') {
-        variables.add(node.value);
+        // Check if this is a string assignment
+        if (node.children && Array.isArray(node.children)) {
+            for (const child of node.children) {
+                if (child.type === 'STRING') {
+                    variables.set(node.value, 'string');
+                    break;
+                }
+            }
+            
+            // If the assignment contains string concatenation or string literals
+            const hasStringValue = detectStringExpression(node.children);
+            if (hasStringValue) {
+                variables.set(node.value, 'string');
+            } else if (!variables.has(node.value)) {
+                variables.set(node.value, 'int'); // Default to int if not already set
+            }
+        } else {
+            if (!variables.has(node.value)) {
+                variables.set(node.value, 'int'); // Default to int
+            }
+        }
     } else if (node.type === 'INPUT') {
-        variables.add(node.value);
+        if (!variables.has(node.value)) {
+            variables.set(node.value, 'int'); // Default to int for input vars
+        }
+    } else if (node.type === 'OUTPUT' || node.type === 'OUTPUTSTR' || node.type === 'OUTPUTEXP') {
+        // Check for string output 
+        if (node.type === 'OUTPUTSTR' || (node.value && typeof node.value === 'string')) {
+            // This suggests string handling might be needed
+        }
     } else if (node.type === 'IF') {
         collectVariablesFromBlock(node.value.thenBlock, variables);
         if (node.value.elseBlock) {
@@ -102,7 +151,7 @@ function collectVariables(node, variables) {
         collectVariablesFromBlock(node.value.block, variables);
     } else if (node.type === 'FOR') {
         if (node.value.init) {
-            variables.add(node.value.init.value);
+            variables.set(node.value.init.value, 'int'); // For loops typically use int
         }
         collectVariablesFromBlock(node.value.block, variables);
     }
@@ -113,6 +162,18 @@ function collectVariables(node, variables) {
             collectVariables(child, variables);
         }
     }
+}
+
+function detectStringExpression(tokens) {
+    if (!tokens || !Array.isArray(tokens)) return false;
+    
+    // Look for any string token in the expression
+    for (const token of tokens) {
+        if (token.type === 'STRING') {
+            return true;
+        }
+    }
+    return false;
 }
 
 function collectVariablesFromBlock(block, variables) {
@@ -127,16 +188,16 @@ function getIndentation(level) {
     return '    '.repeat(level);
 }
 
-function transpileNode(node, indentLevel) {
+function transpileNode(node, indentLevel, variables) {
     if (!node) return '';
     
     const indent = getIndentation(indentLevel);
     
     switch (node.type) {
         case 'ASSIGNMENT':
-            return transpileAssignment(node, indent);
+            return transpileAssignment(node, indent, variables);
         case 'INPUT':
-            return transpileInput(node, indent);
+            return transpileInput(node, indent, variables);
         case 'OUTPUT':
             return transpileOutput(node, indent);
         case 'OUTPUTSTR':
@@ -144,30 +205,43 @@ function transpileNode(node, indentLevel) {
         case 'OUTPUTEXP':
             return transpileOutputExp(node, indent);
         case 'IF':
-            return transpileIf(node, indentLevel);
+            return transpileIf(node, indentLevel, variables);
         case 'WHILE':
-            return transpileWhile(node, indentLevel);
+            return transpileWhile(node, indentLevel, variables);
         case 'FOR':
-            return transpileFor(node, indentLevel);
+            return transpileFor(node, indentLevel, variables);
         case 'DO-WHILE':
-            return transpileDoWhile(node, indentLevel);
+            return transpileDoWhile(node, indentLevel, variables);
         default:
             return `${indent}// Nod neprelucrat: ${node.type}\n`;
     }
 }
 
-function transpileAssignment(node, indent) {
+function transpileAssignment(node, indent, variables) {
     const varName = node.value;
     
     if (node.children && node.children.length > 0) {
+        // Check if this is a string assignment
         const expression = transpileExpression(node.children);
+        
+        // If this is the first time we see this variable and it's assigned a string,
+        // mark it as a string variable
+        if (expression.startsWith('"') && expression.endsWith('"') && !variables.has(varName)) {
+            variables.set(varName, 'string');
+        }
+        
         return `${indent}${varName} = ${expression};\n`;
     }
     
-    return `${indent}${varName} = 0; // Asignare implicită\n`;
+    const type = variables.get(varName) || 'int';
+    if (type === 'string') {
+        return `${indent}${varName} = ""; // Asignare implicită string\n`;
+    } else {
+        return `${indent}${varName} = 0; // Asignare implicită int\n`;
+    }
 }
 
-function transpileInput(node, indent) {
+function transpileInput(node, indent, variables) {
     return `${indent}cin >> ${node.value};\n`;
 }
 
@@ -189,6 +263,9 @@ function transpileOutputExp(node, indent) {
             if (node.value.length === 1 && node.value[0].type === 'NUMBER') {
                 // Single number token
                 return `${indent}cout << ${node.value[0].value} << endl;\n`;
+            } else if (node.value.length === 1 && node.value[0].type === 'STRING') {
+                // Single string token
+                return `${indent}cout << "${node.value[0].value}" << endl;\n`;
             } else {
                 // Process expression tokens
                 const expression = transpileExpression(node.value);
@@ -202,7 +279,7 @@ function transpileOutputExp(node, indent) {
     return `${indent}cout << endl;\n`;
 }
 
-function transpileIf(node, indentLevel) {
+function transpileIf(node, indentLevel, variables) {
     const indent = getIndentation(indentLevel);
     const ifNode = node.value;
     
@@ -211,7 +288,7 @@ function transpileIf(node, indentLevel) {
     // Generăm codul pentru blocul then
     if (ifNode.thenBlock && ifNode.thenBlock.children) {
         for (const childNode of ifNode.thenBlock.children) {
-            code += transpileNode(childNode, indentLevel + 1);
+            code += transpileNode(childNode, indentLevel + 1, variables);
         }
     }
     
@@ -221,7 +298,7 @@ function transpileIf(node, indentLevel) {
     if (ifNode.elseBlock && ifNode.elseBlock.children) {
         code += `${indent}else {\n`;
         for (const childNode of ifNode.elseBlock.children) {
-            code += transpileNode(childNode, indentLevel + 1);
+            code += transpileNode(childNode, indentLevel + 1, variables);
         }
         code += `${indent}}\n`;
     }
@@ -229,7 +306,7 @@ function transpileIf(node, indentLevel) {
     return code;
 }
 
-function transpileWhile(node, indentLevel) {
+function transpileWhile(node, indentLevel, variables) {
     const indent = getIndentation(indentLevel);
     const whileNode = node.value;
     
@@ -238,7 +315,7 @@ function transpileWhile(node, indentLevel) {
     // Generăm codul pentru corpul buclei
     if (whileNode.block && whileNode.block.children) {
         for (const childNode of whileNode.block.children) {
-            code += transpileNode(childNode, indentLevel + 1);
+            code += transpileNode(childNode, indentLevel + 1, variables);
         }
     }
     
@@ -247,7 +324,7 @@ function transpileWhile(node, indentLevel) {
     return code;
 }
 
-function transpileDoWhile(node, indentLevel) {
+function transpileDoWhile(node, indentLevel, variables) {
     const indent = getIndentation(indentLevel);
     const doWhileNode = node.value;
     
@@ -256,7 +333,7 @@ function transpileDoWhile(node, indentLevel) {
     // Generăm codul pentru corpul buclei
     if (doWhileNode.block && doWhileNode.block.children) {
         for (const childNode of doWhileNode.block.children) {
-            code += transpileNode(childNode, indentLevel + 1);
+            code += transpileNode(childNode, indentLevel + 1, variables);
         }
     }
     
@@ -265,7 +342,7 @@ function transpileDoWhile(node, indentLevel) {
     return code;
 }
 
-function transpileFor(node, indentLevel) {
+function transpileFor(node, indentLevel, variables) {
     const indent = getIndentation(indentLevel);
     const forNode = node.value;
     
@@ -297,7 +374,7 @@ function transpileFor(node, indentLevel) {
     // Generăm codul pentru corpul buclei
     if (forNode.block && forNode.block.children) {
         for (const childNode of forNode.block.children) {
-            code += transpileNode(childNode, indentLevel + 1);
+            code += transpileNode(childNode, indentLevel + 1, variables);
         }
     }
     
@@ -363,8 +440,17 @@ function transpileExpression(tokens) {
                 const right = stack.pop();
                 const left = stack.pop();
                 
-                // Evităm parantezele suplimentare
-                stack.push(`${left} ${operator} ${right}`);
+                // Special case for string concatenation with + operator
+                const isStringConcat = 
+                    (right.startsWith('"') && right.endsWith('"')) || 
+                    (left.startsWith('"') && left.endsWith('"'));
+                
+                if (operator === '+' && isStringConcat) {
+                    stack.push(`${left} + ${right}`);  // String concatenation
+                } else {
+                    // Standard binary operation
+                    stack.push(`${left} ${operator} ${right}`);
+                }
             }
         }
     }
@@ -386,4 +472,3 @@ function mapOperator(operator) {
     
     return operatorMap[operator] || operator;
 }
-
