@@ -32,10 +32,20 @@ export async function interpretor(sourceCode, outputToConsole, maxIterations, is
             const refactoredCode = await refactorAllCode(sourceCode);
             sourceCode = refactoredCode;
             try {
+                // Clear the output before running refactored code
+                buffer = '';
+                outputToConsole(""); // Clear the output
+
                 let tokens = lexer(sourceCode);
                 let ast = parser(tokens);
                 let variables = {};
                 evaluateNode(ast, variables, handleOutput, maxIterations);
+                
+                // Output any remaining buffer content
+                if (buffer.length > 0) {
+                    outputToConsole(buffer, true);
+                }
+                
                 return sourceCode;
             } catch (err) {
                 throw new Error(`${err.message} \n Refactored code: ${refactoredCode}`);
@@ -187,4 +197,5 @@ const refactorAllCode = async (code) => {
     const data = await response.json();
     return data.choices[0].message.content;
 }
+
 

@@ -71,6 +71,11 @@ function App() {
 
     // Funcție care adaugă output la consolă
     const outputToConsole = (text) => {
+      // If text is empty string, clear the output
+      if (text === "") {
+        setOutput([]);
+        return;
+      }
       setOutput((prevOutput) => [...prevOutput, text]);
     };
 
@@ -190,3 +195,4 @@ function App() {
 }
 
 export default App;
+
