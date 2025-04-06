@@ -61,17 +61,27 @@ const InstructionsOverlay = ({ onClose }) => {
           <CodeSnippet code='cat timp n diferit 0 executa {\n    cnt = cnt + 1\n    n = [n / 10]\n}\n// Mai compact:\ncat timp n != 0 executa cnt = cnt + 1; n = [n / 10]\nscrie cnt' />
           <InstructionsParagraph text="Repetă până când:" />
           <CodeSnippet code='repeta\n     x = x - 1\npana cand x egal 5\n// Mai compact:\nrepeta scrie x, " "; x = x - 1 pana cand x = 0' />
+          
+          <InstructionsTitle text="8. Manipularea vectorilor" />
+          <InstructionsParagraph text="Vectorii se pot aloca și inițializa folosind parantezele drepte pentru dimensiunea vectorului și acoladele pentru elementele sale." />
+          <CodeSnippet code="v[5]\nv[5] = { 1, 2, 3, 4, 5 }" />
+          <CodeSnippet code="scrie v[2]" />
 
-        
-        <button
-          className="mt-4 py-2 px-4 font-black bg-red-500 text-white rounded hover:bg-red-700 transition-all duration-500 hover:cursor-pointer"
-          onClick={onClose}
-        >
-          Închide
-        </button>
+          <InstructionsTitle text="9. Manipularea șirurilor de caractere" />
+          <InstructionsParagraph text="Șirurile de caractere se scriu între ghilimele și pot fi concatenate folosind operatorul +." />
+          <CodeSnippet code='s = "Hello, " + "World!"' />
+          <CodeSnippet code="scrie s[1]" />
+          
+          <button
+            className="mt-4 py-2 px-4 font-black bg-red-500 text-white rounded hover:bg-red-700 transition-all duration-500 hover:cursor-pointer"
+            onClick={onClose}
+          >
+            Închide
+          </button>
       </div>
     </div>
   );
 };
 
 export default InstructionsOverlay;
+
