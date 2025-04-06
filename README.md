@@ -68,10 +68,10 @@ Dacă vrei să rulezi proiectul pe propriul computer, urmează pașii:
 
 ```bash
 # Clonează repository-ul
-git clone https://github.com/danielmitrache/pseudocode-interpretor.git
+git clone https://github.com/MihaiPMC/LogicFlow.git
 
 # Intră în folderul proiectului
-cd pseudocode-interpretor
+cd LogicFlow
 
 # Instalează dependențele
 npm install
@@ -144,3 +144,5 @@ int main() {
 ```
 
 ---
+
+`
