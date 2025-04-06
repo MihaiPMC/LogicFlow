@@ -323,6 +323,9 @@ export function parser(tokens) {
 
     const program = new Node('PROGRAM', null, instructions)
     console.dir(program, { depth: null })
+    if (program.children.length === 0 && tokens.length > 0) {
+        throw new Error("Programul nu contine instructiuni")
+    }
     return program
 }
 
