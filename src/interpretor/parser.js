@@ -99,8 +99,13 @@ export function parser(tokens) {
                                     i ++
                                     continue
                                 }
-                                if (vars[i].type === 'OPERATOR')
+                                // Consider any token with a value as potentially valid
+                                if (vars[i].type === 'OPERATOR' || vars[i].type === 'NUMBER' || 
+                                    vars[i].type === 'IDENTIFIER' || vars[i].type === 'LPAREN' || 
+                                    vars[i].type === 'RPAREN' || vars[i].type === 'LBRACKET' || 
+                                    vars[i].type === 'RBRACKET') {
                                     valid_expression = true
+                                }
                                 expression.push(vars[i])
                                 i ++
                             }
@@ -314,15 +319,22 @@ function shuntingYard(tokens) {
             }
             stack.push(token)
         }
-        else if (token.type === 'LSQUAREBRACE') {
+        else if (token.type === 'LSQUAREBRACE' || token.type === 'LBRACKET') {
             stack.push(token)
         }
-        else if (token.type === 'RSQUAREBRACE') {
-            while (stack.length > 0 && stack[stack.length - 1].type !== 'LSQUAREBRACE') {
+        else if (token.type === 'RSQUAREBRACE' || token.type === 'RBRACKET') {
+            while (stack.length > 0 && 
+                   stack[stack.length - 1].type !== 'LSQUAREBRACE' && 
+                   stack[stack.length - 1].type !== 'LBRACKET') {
                 output.push(stack.pop())
             }
-            stack.pop()
-            output.push(new Token('OPERATOR', 'int'))
+            if (stack.length > 0) {
+                stack.pop() // Remove the left bracket
+                // Add an 'index' operator to the output
+                output.push(new Token('OPERATOR', 'index'))
+            } else {
+                throw new Error("Unmatched right square bracket")
+            }
         }
         else if (token.type === 'LPAREN') {
             stack.push(token)
@@ -417,7 +429,7 @@ function parseCatTimp(tokens) {
         if (tokens[0] && tokens[0].value !== '{') {
             thenBlock = parseSingleStatement(tokens);
         } else if (tokens[0] && tokens[0].value === '{') {
-            tokens.shift(); // Sărim peste '{'
+            tokens.shift(); // S��rim peste '{'
             thenBlock = parseBracedBlock(tokens);
         }
     }

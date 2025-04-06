@@ -44,7 +44,7 @@ export function lexer(sourceCode) {
         if ( ch === '\n' || ch === ';' ) {
             tokens.push(new Token('NEWLINE', ch))
         }
-        else if ( ch === '+' || (ch === '-' && (tokens[tokens.length - 1].type == 'NUMBER' || tokens[tokens.length - 1].type == 'IDENTIFIER')) || ch === '*' || (ch === '/' && src[0] !== '/') || ch === '%' ) {
+        else if ( ch === '+' || (ch === '-' && (tokens[tokens.length - 1]?.type == 'NUMBER' || tokens[tokens.length - 1]?.type == 'IDENTIFIER' || tokens[tokens.length - 1]?.type == 'RSQUAREBRACE')) || ch === '*' || (ch === '/' && src[0] !== '/') || ch === '%' ) {
             tokens.push(new Token('OPERATOR', ch))
         }
         else if ( ch === '=' && src[0] !== '=' ) {
@@ -78,10 +78,10 @@ export function lexer(sourceCode) {
             tokens.push(new Token('RBRACE', ch))
         }
         else if ( ch === '[' ){
-            tokens.push(new Token('LSQUAREBRACE', ch))
+            tokens.push(new Token('LBRACKET', ch))
         }
         else if ( ch === ']' ){
-            tokens.push(new Token('RSQUAREBRACE', ch))
+            tokens.push(new Token('RBRACKET', ch))
         }
         else if ( ch === '!' ){
             tokens.push(new Token('OPERATOR', 'not'))
@@ -174,8 +174,5 @@ export function lexer(sourceCode) {
         }
     }
     tokens.push(new Token('EOF', null))
-    // for ( let tk of tokens ) {
-    //      console.log(tk)
-    // }
     return tokens
 }
