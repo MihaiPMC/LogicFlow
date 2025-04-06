@@ -8,6 +8,7 @@ import CppOutputEditor from "./components/CppOutputEditor";
 import { interpretor } from "./interpretor/interpretor";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import AISolutionButton from "./components/AISolutionButton";
 
 function App() {
   // Starea codului pseudocod
@@ -111,6 +112,11 @@ function App() {
     }
   };
 
+  const handleApplySolution = (solution) => {
+    setCode(solution);
+    localStorage.setItem("code", solution);
+  };
+
   // Salvează preferințele utilizatorului în localStorage
   useEffect(() => {
     localStorage.setItem("fontSize", fontSize);
@@ -132,18 +138,27 @@ function App() {
         <div className="flex flex-col space-y-4">
           <div className="flex space-x-4">
             <div className="w-1/2">
-              <h2 className="text-xl font-bold text-white mb-2">Pseudocod</h2>
+              <div className="flex items-center mb-2">
+                <h2 className="text-xl font-bold text-white mr-3">Pseudocod</h2>
+                {refactoredCode && (
+                  <AISolutionButton 
+                    originalCode={code}
+                    refactoredCode={refactoredCode} 
+                    onApplySolution={handleApplySolution}
+                  />
+                )}
+              </div>
               <CodeEditor
                 onCodeChange={setCode}
                 fontSize={fontSize}
                 editorTheme={editorTheme}
                 wordWrap={wordWrap}
-                refactoredCode={refactoredCode}
+                code={code}
               />
             </div>
 
             <div className="w-1/2">
-              <h2 className="text-xl font-bold text-white mb-2">Cod C++ generat</h2>
+              <h2 className="text-xl font-bold text-white mb-2">C++</h2>
               <CppOutputEditor 
                 pseudocode={code}
                 refactoredCode={refactoredCode}

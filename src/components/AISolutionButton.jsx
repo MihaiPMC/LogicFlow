@@ -47,15 +47,13 @@ const AISolutionButton = ({ originalCode, refactoredCode, onApplySolution }) => 
 
   return (
     <>
-      <div className="absolute top-2 right-2 z-10">
-        <button 
-          className="border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white 
-                    font-bold py-1 px-3 rounded transition-colors duration-200 text-sm"
-          onClick={() => setShowOverlay(true)}
-        >
-          Arată soluția AI
-        </button>
-      </div>
+      <button 
+        className="border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white 
+                  font-bold py-1 px-3 rounded transition-colors duration-200 text-sm"
+        onClick={() => setShowOverlay(true)}
+      >
+        Arată modificările AI
+      </button>
       
       {showOverlay && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">

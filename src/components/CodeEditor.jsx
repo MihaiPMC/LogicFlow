@@ -1,12 +1,11 @@
 import { Editor } from "@monaco-editor/react";
 import { useState, useEffect } from "react";
 import { useRef } from "react";
-import AISolutionButton from "./AISolutionButton";
 
-const CodeEditor = ({ onCodeChange, fontSize, editorTheme, wordWrap, refactoredCode }) => {
+const CodeEditor = ({ onCodeChange, fontSize, editorTheme, wordWrap, code }) => {
   const editorRef = useRef();
   const [monaco, setMonaco] = useState(null);
-  const [currentCode, setCurrentCode] = useState(localStorage.getItem("code") || "// Scrie pseudocod aici");
+  const [currentCode, setCurrentCode] = useState(code || localStorage.getItem("code") || "// Scrie pseudocod aici");
 
   function handleEditorMount(editor, monacoInstance) {
     editorRef.current = editor;
@@ -102,18 +101,10 @@ const CodeEditor = ({ onCodeChange, fontSize, editorTheme, wordWrap, refactoredC
     }
 
     // Trigger initial code change to populate the C++ view
-    const initialCode = localStorage.getItem("code") || "// Scrie pseudocod aici";
+    const initialCode = code || localStorage.getItem("code") || "// Scrie pseudocod aici";
     setCurrentCode(initialCode);
     onCodeChange(initialCode);
   }
-
-  const handleApplySolution = (solution) => {
-    if (editorRef.current) {
-      editorRef.current.setValue(solution);
-      setCurrentCode(solution);
-      onCodeChange(solution);
-    }
-  };
 
   const handleEditorChange = (value) => {
     setCurrentCode(value);
@@ -134,17 +125,11 @@ const CodeEditor = ({ onCodeChange, fontSize, editorTheme, wordWrap, refactoredC
 
   return (
     <div className="relative">
-      {refactoredCode && (
-        <AISolutionButton 
-          originalCode={currentCode}
-          refactoredCode={refactoredCode} 
-          onApplySolution={handleApplySolution}
-        />
-      )}
       <Editor
         className="h-[50vh]"
         theme="pseudocode-theme"
         defaultLanguage="pseudocode"
+        value={code}
         defaultValue={localStorage.getItem("code") || "// Scrie pseudocod aici"}
         onMount={handleEditorMount}
         onChange={handleEditorChange}
