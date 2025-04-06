@@ -8,48 +8,56 @@ export function generateCPP(ast) {
     let code = '';
     let variables = new Map(); // Track variable name → type mapping
 
+    // Colectăm variabilele înainte de a genera headerele
+    if (ast && ast.children) {
+        collectVariables(ast, variables);
+    }
+    
+    // Verificăm dacă există variabile de tip string
+    const hasStringVariables = Array.from(variables.values()).includes('string');
+
     // Adăugăm header-ele necesare
-    code += '#include <iostream>\n\n';
-    code += '#include <string>\n';
+    code += '#include <iostream>\n';
+    if (hasStringVariables) {
+        code += '#include <string>\n';
+    }
     // code += '#include <cmath>\n';
     // code += '#include <vector>\n\n';
     code += 'using namespace std;\n\n';
     code += 'int main() {\n';
     
-    // Colectăm variabilele și generăm codul pentru fiecare instrucțiune
-    if (ast && ast.children) {
-        collectVariables(ast, variables);
+    // Generăm declarațiile de variabile
+    if (variables.size > 0) {
+        // Group variables by type
+        const stringVars = [];
+        const intVars = [];
         
-        if (variables.size > 0) {
-            // Group variables by type
-            const stringVars = [];
-            const intVars = [];
-            
-            for (const [variable, type] of variables.entries()) {
-                if (type === 'string') {
-                    stringVars.push(variable);
-                } else {
-                    intVars.push(variable);
-                }
+        for (const [variable, type] of variables.entries()) {
+            if (type === 'string') {
+                stringVars.push(variable);
+            } else {
+                intVars.push(variable);
             }
-            
-            // Declare string variables
-            if (stringVars.length > 0) {
-                for (const variable of stringVars) {
-                    code += `    string ${variable};\n`;
-                }
-            }
-            
-            // Declare int variables
-            if (intVars.length > 0) {
-                for (const variable of intVars) {
-                    code += `    int ${variable};\n`;
-                }
-            }
-            code += '\n';
         }
         
-        // Parcurgem nodurile AST și grupăm nodurile de output
+        // Declare string variables
+        if (stringVars.length > 0) {
+            for (const variable of stringVars) {
+                code += `    string ${variable};\n`;
+            }
+        }
+        
+        // Declare int variables
+        if (intVars.length > 0) {
+            for (const variable of intVars) {
+                code += `    int ${variable};\n`;
+            }
+        }
+        code += '\n';
+    }
+    
+    // Parcurgem nodurile AST și grupăm nodurile de output
+    if (ast && ast.children) {
         for (let i = 0; i < ast.children.length; i++) {
             const node = ast.children[i];
             if (isOutputNode(node)) {
@@ -472,3 +480,4 @@ function mapOperator(operator) {
     
     return operatorMap[operator] || operator;
 }
+
