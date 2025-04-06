@@ -1,9 +1,10 @@
 import RunButton from "./RunButton"
 import SettingsButton from "./SettingsButton"
 import InstructionsButton from "./InstructionsButton"
+import ComplexityButton from "./ComplexityButton"
 import { useState, useEffect } from "react";
 
-const NavBar = ({ runCode, openSettings, openInfo }) => {
+const NavBar = ({ runCode, openSettings, openInfo, cppCode }) => {
   const [showTitle, setShowTitle] = useState(window.innerWidth < 768 ? false : true);
   
   useEffect(() => {
@@ -30,7 +31,8 @@ const NavBar = ({ runCode, openSettings, openInfo }) => {
             <h1 className="font-inter font-extrabold text-2xl md:text-4xl">LogicFlow</h1>
           </div>
         )}
-        <div className="flex justify-end items-center ml-auto">
+        <div className="flex justify-end items-center space-x-4 ml-auto">
+          <ComplexityButton cppCode={cppCode} />
           <InstructionsButton openInfo={openInfo} />
           <SettingsButton openSettings={openSettings} />
           <RunButton runCode={runCode}/>

@@ -12,6 +12,8 @@ import "react-toastify/dist/ReactToastify.css";
 function App() {
   // Starea codului pseudocod
   const [code, setCode] = useState(localStorage.getItem("code") || "");
+  // Starea pentru codul C++ generat
+  const [cppCode, setCppCode] = useState("");
   // Starea pentru output-ul de la interpretor
   const [output, setOutput] = useState([]);
   // Starea pentru overlay-ul de setări
@@ -51,6 +53,10 @@ function App() {
     setWordWrap(wordWrap);
     setMaxIterations(maxIterations);
     setAIassisted(AIassisted);
+  };
+
+  const handleCppCodeChange = (newCppCode) => {
+    setCppCode(newCppCode);
   };
 
   const handleRun = () => {
@@ -114,7 +120,8 @@ function App() {
       <NavBar 
         runCode={handleRun} 
         openSettings={() => setShowSettings(true)} 
-        openInfo={() => setShowInstructions(true)} 
+        openInfo={() => setShowInstructions(true)}
+        cppCode={cppCode}
       />
       <div className="container mx-auto mt-4 mb-4">
         <div className="flex flex-col space-y-4">
@@ -138,6 +145,7 @@ function App() {
                 fontSize={fontSize}
                 editorTheme={editorTheme}
                 wordWrap={wordWrap}
+                onCppCodeChange={handleCppCodeChange}
               />
             </div>
           </div>

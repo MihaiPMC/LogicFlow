@@ -22,7 +22,7 @@ export function generateCPP(ast) {
         
         if (variables.size > 0) {        
             for (const variable of variables) {
-                code += `    string ${variable};\n`;
+                code += `    int ${variable};\n`;
             }
             code += '\n';
         }

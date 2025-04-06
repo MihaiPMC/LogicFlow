@@ -4,7 +4,7 @@ import { lexer } from '../interpretor/lexer';
 import { parser } from '../interpretor/parser';
 import { generateCPP } from '../transpiler/cppTranspiler';
 
-const CppOutputEditor = ({ pseudocode, refactoredCode, fontSize, editorTheme, wordWrap }) => {
+const CppOutputEditor = ({ pseudocode, refactoredCode, fontSize, editorTheme, wordWrap, onCppCodeChange }) => {
   const [cppCode, setCppCode] = useState('// Codul C++ va apărea aici');
 
   useEffect(() => {
@@ -18,14 +18,31 @@ const CppOutputEditor = ({ pseudocode, refactoredCode, fontSize, editorTheme, wo
         const ast = parser(tokens);
         const generatedCode = generateCPP(ast);
         setCppCode(generatedCode);
+        
+        // Pass the generated code to the parent component
+        if (onCppCodeChange) {
+          onCppCodeChange(generatedCode);
+        }
       } else {
-        setCppCode('// Scrie pseudocod în partea stângă pentru a genera cod C++');
+        const defaultMessage = '// Scrie pseudocod în partea stângă pentru a genera cod C++';
+        setCppCode(defaultMessage);
+        
+        // Pass the default message to the parent component
+        if (onCppCodeChange) {
+          onCppCodeChange(defaultMessage);
+        }
       }
     } catch (error) {
-      setCppCode(`// Eroare în transpilare:\n// ${error.message}`);
+      const errorMessage = `// Eroare în transpilare:\n// ${error.message}`;
+      setCppCode(errorMessage);
       console.error('Eroare de transpilare:', error);
+      
+      // Pass the error message to the parent component
+      if (onCppCodeChange) {
+        onCppCodeChange(errorMessage);
+      }
     }
-  }, [pseudocode, refactoredCode]);
+  }, [pseudocode, refactoredCode, onCppCodeChange]);
 
   return (
     <div className="h-full">

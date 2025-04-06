@@ -3,11 +3,10 @@ import React from 'react';
 const RunButton = ({ runCode }) => {
   return (
     <button
-    className="inline-block bg-green-500 hover:bg-green-600 py-2 px-6 font-bold text-neutral-100 m-4 rounded-2xl hover:cursor-pointer transition-all duration-150 w-44"
-    onClick={runCode}
+      onClick={runCode}
+      className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-5 rounded-2xl hover:cursor-pointer transition-colors duration-300"
     >
-      <span className="hidden sm:inline">Rulează</span>
-      <span className="ml-1">▶</span>
+      Rulează Codul
     </button>
   );
 };
