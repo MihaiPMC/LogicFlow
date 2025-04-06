@@ -225,7 +225,7 @@ function transpileNode(node, indentLevel, variables) {
         case 'VECTOR_INIT':
             return transpileVectorInit(node, indentLevel);
         default:
-            return `${indent}// Nod neprelucrat: ${node.type}\n`;
+            return `${indent}`;
     }
 }
 
