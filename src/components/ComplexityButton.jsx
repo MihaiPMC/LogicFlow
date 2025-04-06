@@ -72,7 +72,7 @@ const ComplexityButton = ({ cppCode }) => {
     <div className="relative">
       <button
         onClick={toggleComplexity}
-        className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-5 rounded-2xl hover:cursor-pointer transition-colors duration-300"
+        className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-5 rounded-2xl hover:cursor-pointer transition-colors duration-300"
       >
         Arata Complexitate
       </button>
