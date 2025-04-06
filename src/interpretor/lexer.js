@@ -162,8 +162,11 @@ export function lexer(sourceCode) {
             }
             else if ( ch === '"') {
                 let str = ''
-                while ( src[0] !== '"' ) {
+                while (src.length > 0 && src[0] !== '"') {
                     str += src.shift()
+                }
+                if (src.length === 0) {
+                    throw new Error("Unclosed string literal")
                 }
                 src.shift()
                 tokens.push(new Token('STRING', str))
@@ -176,3 +179,4 @@ export function lexer(sourceCode) {
     tokens.push(new Token('EOF', null))
     return tokens
 }
+
