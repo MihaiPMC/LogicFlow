@@ -62,15 +62,42 @@ export function parser(tokens) {
                     while ( tokens.length > 0 && (tokens[0].type !== 'NEWLINE' && tokens[0].type !== 'EOF') ) {
                         vars.push(tokens.shift())
                     }
-                    for ( let i = 0; i < vars.length; i++ ) {
-                        if ( vars[i].type === 'IDENTIFIER') {
-                            instructions.push(new Node('INPUT', vars[i].value))
-                        }
-                        else if ( vars[i].type === 'COMMA' ) {
-                            continue
-                        }
-                        else {
-                            throw new Error('Variabila invalida')
+
+                    // Process the variables to be read
+                    let i = 0;
+                    while (i < vars.length) {
+                        if (vars[i].type === 'IDENTIFIER') {
+                            // Check if this is an array element (followed by '[')
+                            if (i + 1 < vars.length && vars[i + 1].type === 'LBRACKET') {
+                                // Extract vector name
+                                const vectorName = vars[i].value;
+
+                                // Extract the index expression between brackets
+                                let indexExpr = [];
+                                i += 2; // Skip the identifier and '['
+                                while (i < vars.length && vars[i].type !== 'RBRACKET') {
+                                    indexExpr.push(vars[i].value);
+                                    i++;
+                                }
+
+                                // Skip the closing bracket if found
+                                if (i < vars.length && vars[i].type === 'RBRACKET') {
+                                    i++;
+                                }
+
+                                // Build the vector element identifier string: name[index]
+                                const vectorElemId = `${vectorName}[${indexExpr.join('')}]`;
+                                instructions.push(new Node('INPUT', vectorElemId));
+                            } else {
+                                // Regular variable
+                                instructions.push(new Node('INPUT', vars[i].value));
+                                i++;
+                            }
+                        } else if (vars[i].type === 'COMMA') {
+                            i++;
+                        } else {
+                            // Skip any other tokens or handle as needed
+                            i++;
                         }
                     }
                 }

@@ -6,12 +6,62 @@ export function evaluateNode(node, variables, outputToConsole, MAX_ITERATIONS) {
         }
     } 
     else if (node.type === 'INPUT') {
-        let varName = node.value
-        let value = prompt(`Introdu valoarea pentru variabila "${varName}": `)
-        if (isNaN(value)) {
-            throw new Error(`Valoarea introdusa pentru variabila "${varName}" nu este un numar valid!`)
+        // Check if this is a vector element input (contains '[' and ']')
+        if (node.value.includes('[') && node.value.includes(']')) {
+            const match = node.value.match(/([a-zA-Z0-9_]+)\[([^[\]]+)\]/);
+            if (match) {
+                const vectorName = match[1];
+                const indexExpr = match[2];
+
+                // Parse the index expression if it's not just a number
+                let index;
+                if (!isNaN(indexExpr)) {
+                    index = parseInt(indexExpr, 10);
+                } else {
+                    // For expressions like a[i+1], evaluate the expression
+                    // Create a temporary tokens array for the index expression
+                    const tempTokens = [];
+                    for (const char of indexExpr) {
+                        if (!isNaN(char)) {
+                            tempTokens.push({ type: 'NUMBER', value: char });
+                        } else if (/[a-zA-Z_]/.test(char)) {
+                            tempTokens.push({ type: 'IDENTIFIER', value: char });
+                        } else if (['+', '-', '*', '/'].includes(char)) {
+                            tempTokens.push({ type: 'OPERATOR', value: char });
+                        }
+                    }
+                    index = evaluatePostfixExpression(tempTokens, variables);
+                }
+
+                // Initialize the vector if it doesn't exist
+                if (!variables[vectorName]) {
+                    variables[vectorName] = [];
+                }
+
+                // Prompt for the value
+                let value = prompt(`Introdu valoarea pentru ${vectorName}[${index}]: `);
+                if (isNaN(value)) {
+                    throw new Error(`Valoarea introdusa pentru ${node.value} nu este un numar valid!`);
+                }
+
+                // Ensure the array is large enough
+                if (index >= variables[vectorName].length) {
+                    for (let i = variables[vectorName].length; i <= index; i++) {
+                        variables[vectorName][i] = 0;
+                    }
+                }
+
+                // Store the value
+                variables[vectorName][index] = parseFloat(value);
+            }
+        } else {
+            let varName = node.value;
+            let value = prompt(`Introdu valoarea pentru variabila "${varName}": `);
+            if (isNaN(value)) {
+                throw new Error(`Valoarea introdusa pentru variabila "${varName}" nu este un numar valid!`);
+            }
+            variables[varName] = parseFloat(value);
         }
-        variables[varName] = parseFloat(value)
     } 
     else if (node.type === 'OUTPUT') {
         if (variables[node.value] === undefined) {

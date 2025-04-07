@@ -7,15 +7,16 @@ export function generateCPP(ast) {
 
     let code = '';
     let variables = new Map(); // Track variable name → type mapping
+    let vectorVariables = new Set(); // Keep track of variables used as vectors
 
     // Colectăm variabilele înainte de a genera headerele
     if (ast && ast.children) {
-        collectVariables(ast, variables);
+        collectVariables(ast, variables, vectorVariables);
     }
     
     // Verificăm dacă există variabile de tip string și vector
     const hasStringVariables = Array.from(variables.values()).includes('string');
-    const hasVectorVariables = Array.from(variables.values()).includes('vector');
+    const hasVectorVariables = vectorVariables.size > 0;
 
     // Adăugăm header-ele necesare
     code += '#include <iostream>\n';
@@ -33,8 +34,14 @@ export function generateCPP(ast) {
         // Group variables by type
         const stringVars = [];
         const intVars = [];
+        const vectorVars = new Set(vectorVariables);
         
         for (const [variable, type] of variables.entries()) {
+            // Skip variables that are already declared as vectors
+            if (vectorVars.has(variable)) {
+                continue;
+            }
+            
             if (type === 'string') {
                 stringVars.push(variable);
             } else {
@@ -117,9 +124,25 @@ function transpileOutputGroup(nodes, indentLevel) {
     return `${indent}cout << ${parts.join(' << ')} << endl;\n`;
 }
 
-function collectVariables(node, variables) {
+function collectVariables(node, variables, vectorVariables) {
     if (!node) return;
     if (node.type === 'ASSIGNMENT') {
+        // Check if this variable is used as a vector elsewhere
+        if (vectorVariables.has(node.value)) {
+            // Skip adding it as a regular variable
+            return;
+        }
+        
+        // Check if this is a vector element assignment (contains array indexing)
+        if (node.value.includes('[') && node.value.includes(']')) {
+            // Extract the base variable name (before '[')
+            const baseVarName = node.value.split('[')[0];
+            vectorVariables.add(baseVarName);
+            // Remove this variable if it was previously added as a scalar
+            variables.delete(baseVarName);
+            return;
+        }
+
         // Check if this is a string assignment
         if (node.children && Array.isArray(node.children)) {
             for (const child of node.children) {
@@ -143,31 +166,69 @@ function collectVariables(node, variables) {
         }
     } 
     else if (node.type === 'INPUT') {
-        if (!variables.has(node.value)) {
+        // Check if this is a vector element input
+        if (node.value.includes('[') && node.value.includes(']')) {
+            // Extract the base variable name (before '[')
+            const baseVarName = node.value.split('[')[0];
+            vectorVariables.add(baseVarName);
+            // Remove this variable if it was previously added as a scalar
+            variables.delete(baseVarName);
+            return;
+        }
+        
+        if (!variables.has(node.value) && !vectorVariables.has(node.value)) {
             variables.set(node.value, 'int'); // Default to int for input vars
         }
     }
     else if (node.type === 'VECTOR_ALLOC' || node.type === 'VECTOR_INIT') {
-        variables.set(node.value, 'vector');
+        vectorVariables.add(node.value);
+        // If this was previously declared as a scalar, remove it
+        variables.delete(node.value);
     }
     else if (node.type === 'IF') {
-        collectVariablesFromBlock(node.value.thenBlock, variables);
+        collectVariablesFromBlock(node.value.thenBlock, variables, vectorVariables);
         if (node.value.elseBlock) {
-            collectVariablesFromBlock(node.value.elseBlock, variables);
+            collectVariablesFromBlock(node.value.elseBlock, variables, vectorVariables);
         }
     } else if (node.type === 'WHILE' || node.type === 'DO-WHILE') {
-        collectVariablesFromBlock(node.value.block, variables);
+        collectVariablesFromBlock(node.value.block, variables, vectorVariables);
     } else if (node.type === 'FOR') {
         if (node.value.init) {
-            variables.set(node.value.init.value, 'int'); // For loops typically use int
+            // Make sure this isn't a vector variable before adding it as an int
+            if (!vectorVariables.has(node.value.init.value)) {
+                variables.set(node.value.init.value, 'int'); // For loops typically use int
+            }
         }
-        collectVariablesFromBlock(node.value.block, variables);
+        collectVariablesFromBlock(node.value.block, variables, vectorVariables);
     }
     
-    // Recursiv pentru copii
+    // Check expressions for array access
     if (node.children && Array.isArray(node.children)) {
+        // Look for array access patterns in expressions
+        for (let i = 0; i < node.children.length; i++) {
+            const token = node.children[i];
+            if (token.type === 'IDENTIFIER' && i + 2 < node.children.length) {
+                if (node.children[i+1].type === 'LBRACKET') {
+                    // This is an array access, mark the variable as a vector
+                    vectorVariables.add(token.value);
+                    // Remove it from regular variables if it was added there
+                    variables.delete(token.value);
+                }
+            }
+            // Also handle the index operator in postfix expressions
+            if (token.type === 'OPERATOR' && token.value === 'index' && i >= 2) {
+                // The array name should be two positions back in a postfix expression
+                const arrayToken = node.children[i-2];
+                if (arrayToken && arrayToken.type === 'IDENTIFIER') {
+                    vectorVariables.add(arrayToken.value);
+                    variables.delete(arrayToken.value);
+                }
+            }
+        }
+        
+        // Recursively process children
         for (const child of node.children) {
-            collectVariables(child, variables);
+            collectVariables(child, variables, vectorVariables);
         }
     }
 }
@@ -184,10 +245,10 @@ function detectStringExpression(tokens) {
     return false;
 }
 
-function collectVariablesFromBlock(block, variables) {
+function collectVariablesFromBlock(block, variables, vectorVariables) {
     if (block && block.children) {
         for (const child of block.children) {
-            collectVariables(child, variables);
+            collectVariables(child, variables, vectorVariables);
         }
     }
 }
