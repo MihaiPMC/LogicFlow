@@ -8,10 +8,12 @@ export function generateCPP(ast) {
     let code = '';
     let variables = new Map(); // Track variable name → type mapping
     let vectorVariables = new Set(); // Keep track of variables used as vectors
+    let initializedVectors = new Set(); // Track which vectors are explicitly initialized
+    let maxVectorIndices = new Map(); // Track maximum index used for each vector
 
     // Colectăm variabilele înainte de a genera headerele
     if (ast && ast.children) {
-        collectVariables(ast, variables, vectorVariables);
+        collectVariables(ast, variables, vectorVariables, initializedVectors, maxVectorIndices);
     }
     
     // Verificăm dacă există variabile de tip string și vector
@@ -63,6 +65,21 @@ export function generateCPP(ast) {
             }
         }
         code += '\n';
+    }
+    
+    // Initialize vectors that are used but not explicitly allocated/initialized
+    if (vectorVariables.size > 0) {
+        for (const vectorVar of vectorVariables) {
+            if (!initializedVectors.has(vectorVar)) {
+                // Use the maximum index + 1 as the size, or default to a reasonable size if no index was found
+                const maxIndex = maxVectorIndices.get(vectorVar);
+                const vectorSize = maxIndex !== undefined ? maxIndex + 1 : 10;
+                code += `    vector<int> ${vectorVar}(${vectorSize}, 0);\n`;
+            }
+        }
+        if (vectorVariables.size > initializedVectors.size) {
+            code += '\n';
+        }
     }
     
     // Parcurgem nodurile AST și grupăm nodurile de output
@@ -124,7 +141,7 @@ function transpileOutputGroup(nodes, indentLevel) {
     return `${indent}cout << ${parts.join(' << ')} << endl;\n`;
 }
 
-function collectVariables(node, variables, vectorVariables) {
+function collectVariables(node, variables, vectorVariables, initializedVectors, maxVectorIndices) {
     if (!node) return;
     if (node.type === 'ASSIGNMENT') {
         // Check if this variable is used as a vector elsewhere
@@ -140,6 +157,21 @@ function collectVariables(node, variables, vectorVariables) {
             vectorVariables.add(baseVarName);
             // Remove this variable if it was previously added as a scalar
             variables.delete(baseVarName);
+            
+            // Try to extract index if it's a constant
+            try {
+                const indexStr = node.value.match(/\[([0-9]+)\]/);
+                if (indexStr && indexStr[1]) {
+                    const index = parseInt(indexStr[1], 10);
+                    const currentMax = maxVectorIndices.get(baseVarName) || 0;
+                    if (index > currentMax) {
+                        maxVectorIndices.set(baseVarName, index);
+                    }
+                }
+            } catch (e) {
+                // Not a constant index, ignore
+            }
+            
             return;
         }
 
@@ -159,6 +191,9 @@ function collectVariables(node, variables, vectorVariables) {
             } else if (!variables.has(node.value)) {
                 variables.set(node.value, 'int'); // Default to int if not already set
             }
+            
+            // Check for array accesses in the expression
+            checkArrayAccessesInExpression(node.children, vectorVariables, maxVectorIndices);
         } else {
             if (!variables.has(node.value)) {
                 variables.set(node.value, 'int'); // Default to int
@@ -173,6 +208,21 @@ function collectVariables(node, variables, vectorVariables) {
             vectorVariables.add(baseVarName);
             // Remove this variable if it was previously added as a scalar
             variables.delete(baseVarName);
+            
+            // Try to extract index if it's a constant
+            try {
+                const indexStr = node.value.match(/\[([0-9]+)\]/);
+                if (indexStr && indexStr[1]) {
+                    const index = parseInt(indexStr[1], 10);
+                    const currentMax = maxVectorIndices.get(baseVarName) || 0;
+                    if (index > currentMax) {
+                        maxVectorIndices.set(baseVarName, index);
+                    }
+                }
+            } catch (e) {
+                // Not a constant index, ignore
+            }
+            
             return;
         }
         
@@ -182,16 +232,49 @@ function collectVariables(node, variables, vectorVariables) {
     }
     else if (node.type === 'VECTOR_ALLOC' || node.type === 'VECTOR_INIT') {
         vectorVariables.add(node.value);
+        initializedVectors.add(node.value); // Mark this vector as explicitly initialized
         // If this was previously declared as a scalar, remove it
         variables.delete(node.value);
     }
+    else if (node.type === 'OUTPUT' || node.type === 'OUTPUTEXP') {
+        // Check if we're outputting a vector element
+        if (node.value && typeof node.value === 'string' && node.value.includes('[') && node.value.includes(']')) {
+            const baseVarName = node.value.split('[')[0];
+            vectorVariables.add(baseVarName);
+            variables.delete(baseVarName);
+            
+            try {
+                const indexStr = node.value.match(/\[([0-9]+)\]/);
+                if (indexStr && indexStr[1]) {
+                    const index = parseInt(indexStr[1], 10);
+                    const currentMax = maxVectorIndices.get(baseVarName) || 0;
+                    if (index > currentMax) {
+                        maxVectorIndices.set(baseVarName, index);
+                    }
+                }
+            } catch (e) {
+                // Not a constant index, ignore
+            }
+        }
+        
+        // Also check expression outputs for array accesses
+        if (node.value && Array.isArray(node.value)) {
+            checkArrayAccessesInExpression(node.value, vectorVariables, maxVectorIndices);
+        }
+    }
     else if (node.type === 'IF') {
-        collectVariablesFromBlock(node.value.thenBlock, variables, vectorVariables);
+        if (node.value.condition) {
+            checkArrayAccessesInExpression(node.value.condition, vectorVariables, maxVectorIndices);
+        }
+        collectVariablesFromBlock(node.value.thenBlock, variables, vectorVariables, initializedVectors, maxVectorIndices);
         if (node.value.elseBlock) {
-            collectVariablesFromBlock(node.value.elseBlock, variables, vectorVariables);
+            collectVariablesFromBlock(node.value.elseBlock, variables, vectorVariables, initializedVectors, maxVectorIndices);
         }
     } else if (node.type === 'WHILE' || node.type === 'DO-WHILE') {
-        collectVariablesFromBlock(node.value.block, variables, vectorVariables);
+        if (node.value.condition) {
+            checkArrayAccessesInExpression(node.value.condition, vectorVariables, maxVectorIndices);
+        }
+        collectVariablesFromBlock(node.value.block, variables, vectorVariables, initializedVectors, maxVectorIndices);
     } else if (node.type === 'FOR') {
         if (node.value.init) {
             // Make sure this isn't a vector variable before adding it as an int
@@ -199,36 +282,95 @@ function collectVariables(node, variables, vectorVariables) {
                 variables.set(node.value.init.value, 'int'); // For loops typically use int
             }
         }
-        collectVariablesFromBlock(node.value.block, variables, vectorVariables);
+        
+        if (node.value.condition) {
+            checkArrayAccessesInExpression(node.value.condition, vectorVariables, maxVectorIndices);
+        }
+        
+        collectVariablesFromBlock(node.value.block, variables, vectorVariables, initializedVectors, maxVectorIndices);
     }
     
     // Check expressions for array access
     if (node.children && Array.isArray(node.children)) {
         // Look for array access patterns in expressions
-        for (let i = 0; i < node.children.length; i++) {
-            const token = node.children[i];
-            if (token.type === 'IDENTIFIER' && i + 2 < node.children.length) {
-                if (node.children[i+1].type === 'LBRACKET') {
-                    // This is an array access, mark the variable as a vector
-                    vectorVariables.add(token.value);
-                    // Remove it from regular variables if it was added there
-                    variables.delete(token.value);
-                }
-            }
-            // Also handle the index operator in postfix expressions
-            if (token.type === 'OPERATOR' && token.value === 'index' && i >= 2) {
-                // The array name should be two positions back in a postfix expression
-                const arrayToken = node.children[i-2];
-                if (arrayToken && arrayToken.type === 'IDENTIFIER') {
-                    vectorVariables.add(arrayToken.value);
-                    variables.delete(arrayToken.value);
-                }
-            }
-        }
+        checkArrayAccessesInExpression(node.children, vectorVariables, maxVectorIndices);
         
         // Recursively process children
         for (const child of node.children) {
-            collectVariables(child, variables, vectorVariables);
+            collectVariables(child, variables, vectorVariables, initializedVectors, maxVectorIndices);
+        }
+    }
+}
+
+function checkArrayAccessesInExpression(tokens, vectorVariables, maxVectorIndices) {
+    if (!tokens || !Array.isArray(tokens)) return;
+    
+    // First pass: look for explicit array indexing patterns using brackets
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        
+        // Look for pattern: IDENTIFIER followed by LBRACKET
+        if (token.type === 'IDENTIFIER' && i + 1 < tokens.length) {
+            // Check for direct array access with LBRACKET
+            if (tokens[i+1].type === 'LBRACKET') {
+                // This is an array access, mark the variable as a vector
+                const varName = token.value;
+                vectorVariables.add(varName);
+                
+                // Try to extract the index if it's a constant
+                if (i + 2 < tokens.length && tokens[i+2].type === 'NUMBER') {
+                    const index = parseInt(tokens[i+2].value, 10);
+                    const currentMax = maxVectorIndices.get(varName) || 0;
+                    if (index > currentMax) {
+                        maxVectorIndices.set(varName, index);
+                    }
+                }
+            }
+            
+            // Check for direct array usage without indexing (e.g., just "a" but in a context where "a" is an array)
+            else if (vectorVariables.has(token.value)) {
+                // Just using the variable name, but we know it's a vector
+                continue;
+            }
+        }
+        
+        // Special case for array access in string format like "a[3]"
+        if (token.type === 'STRING' && token.value.includes('[') && token.value.includes(']')) {
+            const match = token.value.match(/([a-zA-Z0-9_]+)\[([0-9]+)\]/);
+            if (match) {
+                const varName = match[1];
+                const index = parseInt(match[2], 10);
+                vectorVariables.add(varName);
+                
+                const currentMax = maxVectorIndices.get(varName) || 0;
+                if (index > currentMax) {
+                    maxVectorIndices.set(varName, index);
+                }
+            }
+        }
+    }
+    
+    // Second pass: look for index operations in postfix notation
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        
+        if (token.type === 'OPERATOR' && token.value === 'index' && i >= 2) {
+            // The array name should be two positions back in a postfix expression
+            const arrayToken = tokens[i-2];
+            if (arrayToken && arrayToken.type === 'IDENTIFIER') {
+                const varName = arrayToken.value;
+                vectorVariables.add(varName);
+                
+                // Try to extract the index if it's a constant
+                const indexToken = tokens[i-1];
+                if (indexToken && indexToken.type === 'NUMBER') {
+                    const index = parseInt(indexToken.value, 10);
+                    const currentMax = maxVectorIndices.get(varName) || 0;
+                    if (index > currentMax) {
+                        maxVectorIndices.set(varName, index);
+                    }
+                }
+            }
         }
     }
 }
@@ -245,10 +387,10 @@ function detectStringExpression(tokens) {
     return false;
 }
 
-function collectVariablesFromBlock(block, variables, vectorVariables) {
+function collectVariablesFromBlock(block, variables, vectorVariables, initializedVectors, maxVectorIndices) {
     if (block && block.children) {
         for (const child of block.children) {
-            collectVariables(child, variables, vectorVariables);
+            collectVariables(child, variables, vectorVariables, initializedVectors, maxVectorIndices);
         }
     }
 }
