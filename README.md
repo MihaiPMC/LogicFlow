@@ -105,6 +105,7 @@ Aplicația va fi disponibilă pe `http://localhost:5173/` (sau alt port specific
 
 ---
 
+
 ## 📊 Exemplu comparativ
 
 ### Pseudocod:
