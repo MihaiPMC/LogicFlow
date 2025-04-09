@@ -35,6 +35,15 @@ class whileNode {
     }
 }
 
+class forNode {
+    constructor(init, condition, increment, block) {
+        this.init = init
+        this.condition = condition
+        this.increment = increment
+        this.block = block
+    }
+}
+
 function eatNewlines(tokens) {
     while (tokens.length > 0 && tokens[0].type === 'NEWLINE') {
         tokens.shift()
@@ -202,7 +211,7 @@ export function parser(tokens, rec_level = 0) {
                     let IFNode = new ifNode(postFixCondition, thenNode, elseNode)
                     instructions.push(new Node('IF', IFNode))
                 }
-                else if ( currToken.value === 'cat_timp' ) {
+                else if ( currToken.value === 'cat timp' ) {
                     // Cazul in care avem un while
                     let found_condition = false, found_then = false
                     let condition = []
@@ -220,7 +229,7 @@ export function parser(tokens, rec_level = 0) {
                         if (tokens[0].value !== '{') {
                             // Daca nu avem acolade, atunci avem doar o singura instructiune
                             thenBlock = []
-                            while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].type !== 'NEWLINE') {
+                            while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].value !== '\n') {
                                 thenBlock.push(tokens.shift())
                             }
                             found_then = true
@@ -254,6 +263,142 @@ export function parser(tokens, rec_level = 0) {
 
                     let WHILENode = new whileNode(postFixCondition, thenNode)
                     instructions.push(new Node('WHILE', WHILENode))
+                }
+                else if ( currToken.value === 'pentru' ) {
+                    let found_condition = false, found_then = false
+                    let condition = []
+                    let thenBlock = []
+                    eatNewlines(tokens)
+                    while (tokens.length > 0 && tokens[0].value !== 'executa' && tokens[0].type !== 'LBRACE') {
+                        condition.push(tokens.shift())
+                    }
+                    found_condition = true
+
+                    if (tokens[0].value === 'executa') {
+                        tokens.shift() //Sari peste executa
+                        eatNewlines(tokens)
+                        // E posibil sa fie un for scris pe o linie: pentru <conditie> executa <instr1>
+                        if (tokens[0].value !== '{') {
+                            // Daca nu avem acolade, atunci avem doar o singura instructiune
+                            thenBlock = []
+                            while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].value !== '\n') {
+                                thenBlock.push(tokens.shift())
+                            }
+                            found_then = true
+                        }
+                    }
+                    if (tokens[0].value === '{' && !found_then) {
+                        tokens.shift() //Sari peste {
+                        eatNewlines(tokens)
+                        thenBlock = []
+                        let brackets = 1
+                        while (tokens.length > 0 && brackets > 0 && tokens[0].type !== 'EOF' ) {
+                            if (tokens[0].type === 'LBRACE') {
+                                brackets ++
+                            }
+                            else if (tokens[0].type === 'RBRACE') {
+                                brackets --
+                                if (brackets === 0) {
+                                    break
+                                }
+                            }
+                            thenBlock.push(tokens.shift())
+                        }
+                    }
+
+                    // Parsam conditia 
+                    let init = [], cond = [], inc = []
+                    while (condition.length > 0 && condition[0].type !== 'COMMA' && condition[0].type !== 'NEWLINE') {
+                        init.push(condition.shift())
+                    }
+                    condition.shift() // Sari peste ,
+                    while (condition.length > 0 && condition[0].type !== 'COMMA' && condition[0].type !== 'NEWLINE') {
+                        cond.push(condition.shift())
+                    }
+                    condition.shift() // Sari peste ,
+                    while (condition.length > 0) {
+                        inc.push(condition.shift())
+                    }
+
+                    // Mai intai gasim variabila la care se refera for-ul
+                    let varName = null
+                    for ( let tk of init ) {
+                        if (tk.type === 'IDENTIFIER') {
+                            varName = tk.value
+                            break
+                        }
+                    }
+                    // Gasim expresia de initializare
+                    let initExp = []
+                    for ( let i = 0; i < init.length; i++ ) {
+                        if ( init[i].type === 'ASSIGN' ) {
+                            i ++
+                            while ( i < init.length && init[i].type !== 'COMMA' ) {
+                                initExp.push(init[i])
+                                i ++
+                            }
+                            break
+                        }
+                    }
+
+                    let tipFor = 'crescator'
+
+                    // Acum parsam incrementarea si o "aranjam" daca nu exista sau daca are un singur element
+                    if (inc.length === 0) {
+                        // Daca nu avem incrementare, atunci incrementarea este cu 1
+                        let newInc = []
+                        newInc.push(new Token('IDENTIFIER', varName))
+                        newInc.push(new Token('ASSIGN', '='))
+                        newInc.push(new Token('IDENTIFIER', varName))
+                        newInc.push(new Token('OPERATOR', '+'))
+                        newInc.push(new Token('NUMBER', '1'))
+                        inc = newInc
+                    }
+                    else if (inc.length === 1) {
+                        // Daca avem doar un element, il aduna la variabila
+                        if ( inc[0].type === 'NUMBER' && parseFloat(inc[0].value) < 0 ) {
+                            tipFor = 'descrescator'
+                        }
+                        let newInc = []
+                        newInc.push(new Token('IDENTIFIER', varName))
+                        newInc.push(new Token('ASSIGN', '='))
+                        newInc.push(new Token('IDENTIFIER', varName))
+                        newInc.push(new Token('OPERATOR', '+'))
+                        newInc.push(inc[0])
+                        inc = newInc
+                    }
+
+
+                    // Parsam si "aranjam" conditia, daca are un singur element
+                    if ( cond.length === 1 ) {
+                        let newCond = []
+                        newCond.push(new Token('IDENTIFIER', varName))
+                        if ( tipFor === 'crescator' ) {
+                            newCond.push(new Token('OPERATOR', '<='))
+                        }
+                        else {
+                            newCond.push(new Token('OPERATOR', '>='))
+                        }
+                        newCond.push(cond[0])
+                        cond = newCond
+                    }
+
+                    console.log("InitExp: ")
+                    initExp = shuntingYard(initExp)
+                    for( let tk of initExp ) {
+                        console.log(tk.value)
+                    }
+
+                    init.push(new Token('EOF', null))
+                    cond.push(new Token('EOF', null))
+                    inc.push(new Token('EOF', null))
+                    thenBlock.push(new Token('EOF', null))
+                    const initNode = new Node('ASSIGNMENT', varName, shuntingYard(initExp))
+                    const postFixCondition = shuntingYard(cond)
+                    const incNode = parser(inc, rec_level + 1)
+                    const thenNode = parser(thenBlock, rec_level + 1)
+                    const FORNode = new forNode(initNode, postFixCondition, incNode, thenNode)
+                    instructions.push(new Node('FOR', FORNode))
                 }
             case 'IDENTIFIER':
                 let varName = currToken.value

@@ -4,7 +4,7 @@ const KEYWORDS = [
     'daca',
     'atunci',
     'altfel',
-    'cat_timp',
+    'cat timp',
     'pentru',
     'executa',
     'EOF',
@@ -103,6 +103,17 @@ export function lexer(sourceCode) {
                 while ( isAlpha(src[0]) || isDigit(src[0]) || src[0] === '_' ) {
                     id += src.shift()
                 }
+
+                //Cazul in care avem 'cat' => s-ar putea sa fie 'cat timp'
+                if (id === 'cat' && src[0] === ' ' && src[1] === 't' && src[2] === 'i' && src[3] === 'm' && src[4] === 'p') {
+                    id += ' timp'
+                    src.shift()
+                    src.shift()
+                    src.shift()
+                    src.shift()
+                    src.shift()
+                }
+
                 if ( KEYWORDS.includes(id) ) {
                     tokens.push(new Token('KEYWORD', id))
                 }

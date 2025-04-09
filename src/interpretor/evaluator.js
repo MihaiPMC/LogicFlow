@@ -1,4 +1,5 @@
 export function evaluateNode(node, variables, outputToConsole) {
+    if (!node) return
     if (node.type === 'PROGRAM') {
         for (let childNode of node.children) {
             evaluateNode(childNode, variables, outputToConsole) 
@@ -34,14 +35,24 @@ export function evaluateNode(node, variables, outputToConsole) {
             evaluateNode(IFNode.elseBlock, variables, outputToConsole)
         }
     }
-    // else if (node.type === 'WHILE') {
-    //     let WHILENode = node.value
-    //     let condition = evaluatePostfixExpression(WHILENode.condition, variables)
-    //     while (condition) {
-    //         evaluateNode(WHILENode.block, variables, outputToConsole)
-    //         condition = evaluatePostfixExpression(WHILENode.condition, variables)
-    //     }
-    // }
+    else if (node.type === 'WHILE') {
+        let WHILENode = node.value
+        let condition = evaluatePostfixExpression(WHILENode.condition, variables)
+        while (condition) {
+            evaluateNode(WHILENode.block, variables, outputToConsole)
+            condition = evaluatePostfixExpression(WHILENode.condition, variables)
+        }
+    }
+    else if (node.type === 'FOR') {
+        let FORNode = node.value
+        let INITNode = FORNode.init
+        let STEPNode = FORNode.increment
+        variables[INITNode.value] = evaluatePostfixExpression(INITNode.children, variables)
+        while (evaluatePostfixExpression(FORNode.condition, variables)) {
+            evaluateNode(FORNode.block, variables, outputToConsole);
+            evaluateNode(STEPNode, variables, outputToConsole);
+        }
+    }
 }
 
 function evaluatePostfixExpression(tokens, variables) {
@@ -64,7 +75,7 @@ function evaluatePostfixExpression(tokens, variables) {
             }
             else if (token.value === 'int') {
                 let op = stack.pop()
-                stack.push(Math.floor(op)) // Aplica partea întreagă
+                stack.push(Math.floor(op))
             }
             else {
                 let op2 = stack.pop()
