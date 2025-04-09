@@ -279,6 +279,7 @@ export function parser(tokens, rec_level = 0) {
                         eatNewlines(tokens)
                         // E posibil sa fie un for scris pe o linie: pentru <conditie> executa <instr1>
                         if (tokens[0].value !== '{') {
+                            eatNewlines(tokens)
                             // Daca nu avem acolade, atunci avem doar o singura instructiune
                             thenBlock = []
                             while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].value !== '\n') {
@@ -399,6 +400,45 @@ export function parser(tokens, rec_level = 0) {
                     const thenNode = parser(thenBlock, rec_level + 1)
                     const FORNode = new forNode(initNode, postFixCondition, incNode, thenNode)
                     instructions.push(new Node('FOR', FORNode))
+                }
+                else if ( currToken.value === 'repeta' ) {
+                    // Cazul in care avem un do-while
+                    let found_condition = false, found_then = false
+                    let condition = []
+                    let thenBlock = []
+
+                    let repetas = 1
+                    while (tokens.length > 0 && repetas > 0 && tokens[0].type !== 'EOF' ) {
+                        if (tokens[0].value === 'repeta') 
+                            repetas ++
+                        else if (tokens[0].value === 'pana cand') {
+                            repetas --
+                            if (repetas === 0) {
+                                break
+                            }
+                        }
+                        thenBlock.push(tokens.shift())
+                    }
+
+                    if (tokens[0].value === 'pana cand') {
+                        tokens.shift() //Sari peste pana cand
+                        eatNewlines(tokens)
+                        condition = []
+                        while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].value !== '\n') {
+                            condition.push(tokens.shift())
+                        }
+                        found_condition = true
+                    }
+
+                    let thenNode = null
+                    if ( thenBlock ) {
+                        thenBlock.push(new Token('EOF', null))
+                        thenNode = parser(thenBlock, rec_level + 1)
+                    }
+                    let postFixCondition = shuntingYard(condition)
+
+                    let DO_WHILENode = new whileNode(postFixCondition, thenNode)
+                    instructions.push(new Node('DO-WHILE', DO_WHILENode))
                 }
             case 'IDENTIFIER':
                 let varName = currToken.value

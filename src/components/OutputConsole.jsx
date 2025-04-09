@@ -1,10 +1,13 @@
-const OutputConsole = () => {
+const OutputConsole = ({ output, textColor }) => {
+    const consoleClass = textColor === "white" ? "h-[30vh] w-full font-mono bg-black resize-none border-4 border-gray-800 rounded-lg p-4 text-white" : "h-[30vh] w-full font-mono bg-black resize-none border-4 border-gray-800 rounded-lg p-4 text-red-600";
     return (
       <textarea
-        className="h-[30vh] w-full text-white font-mono bg-black resize-none border-4 border-gray-800 rounded-lg p-4"
-        placeholder="Aici se va vedea ce scrie programul:"
-        readOnly
-      ></textarea>
+        className={consoleClass}
+        placeholder={"Aici se va vedea ce scrie programul:\n"}
+        readOnly 
+        value={output}
+      >
+      </textarea>
     );
   };
   

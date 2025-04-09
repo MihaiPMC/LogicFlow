@@ -6,6 +6,7 @@ import { interpretor } from "./interpretor/interpretor";
 const App = () => {
   const [code, setCode] = useState("");
   const [output, setOutput] = useState("");
+  const [textColor, setTextColor] = useState("white");
 
   useEffect(() => {
     setCode(localStorage.getItem("code"));
@@ -24,8 +25,15 @@ const App = () => {
   }
 
   const runCode = () => {
-    setOutput("");
-    const outputVariables = interpretor(code, outputToConsole);
+    try {
+      setOutput("");
+      setTextColor("white");
+      const outputVariables = interpretor(code, outputToConsole);
+    }
+    catch (err) {
+      setTextColor("red");
+      setOutput("Eroare la interpretare: " + err.message);
+    }
   };
 
   return (
@@ -33,7 +41,7 @@ const App = () => {
       <NavBar runCode={runCode} />
       <div className="h-auto px-6 py-8 text-gray-800 flex flex-col gap-2">
         <CodeEditor onCodeChange={setCode} />
-        <OutputConsole output={output} />
+        <OutputConsole output={output} textColor = {textColor}/>
       </div>
     </>
   );

@@ -7,6 +7,8 @@ const KEYWORDS = [
     'cat timp',
     'pentru',
     'executa',
+    'repeta',
+    'pana cand',
     'EOF',
 ]
 
@@ -107,6 +109,16 @@ export function lexer(sourceCode) {
                 //Cazul in care avem 'cat' => s-ar putea sa fie 'cat timp'
                 if (id === 'cat' && src[0] === ' ' && src[1] === 't' && src[2] === 'i' && src[3] === 'm' && src[4] === 'p') {
                     id += ' timp'
+                    src.shift()
+                    src.shift()
+                    src.shift()
+                    src.shift()
+                    src.shift()
+                }
+
+                //Cazul in care avem 'pana' => s-ar putea sa fie 'pana cand'
+                if (id === 'pana' && src[0] === ' ' && src[1] === 'c' && src[2] === 'a' && src[3] === 'n' && src[4] === 'd') {
+                    id += ' cand'
                     src.shift()
                     src.shift()
                     src.shift()

@@ -1,3 +1,5 @@
+const MAX_ITERATIONS = 100000
+
 export function evaluateNode(node, variables, outputToConsole) {
     if (!node) return
     if (node.type === 'PROGRAM') {
@@ -38,9 +40,14 @@ export function evaluateNode(node, variables, outputToConsole) {
     else if (node.type === 'WHILE') {
         let WHILENode = node.value
         let condition = evaluatePostfixExpression(WHILENode.condition, variables)
+        let count = 0
         while (condition) {
             evaluateNode(WHILENode.block, variables, outputToConsole)
             condition = evaluatePostfixExpression(WHILENode.condition, variables)
+            count ++
+            if ( count > MAX_ITERATIONS) {
+                throw new Error ('Bucla infinita!')
+            }
         }
     }
     else if (node.type === 'FOR') {
@@ -48,10 +55,26 @@ export function evaluateNode(node, variables, outputToConsole) {
         let INITNode = FORNode.init
         let STEPNode = FORNode.increment
         variables[INITNode.value] = evaluatePostfixExpression(INITNode.children, variables)
+        let count = 0
         while (evaluatePostfixExpression(FORNode.condition, variables)) {
             evaluateNode(FORNode.block, variables, outputToConsole);
             evaluateNode(STEPNode, variables, outputToConsole);
+            count ++
+            if ( count > MAX_ITERATIONS) {
+                throw new Error ('Bucla infinita!')
+            }
         }
+    }
+    else if (node.type === 'DO-WHILE') {
+        let DO_WHILENode = node.value
+        let count = 0
+        do {
+            evaluateNode(DO_WHILENode.block, variables, outputToConsole)
+            count ++
+            if ( count > MAX_ITERATIONS) {
+                throw new Error ('Bucla infinita!')
+            }
+        } while (!evaluatePostfixExpression(DO_WHILENode.condition, variables))
     }
 }
 

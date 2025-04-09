@@ -10,7 +10,7 @@ const CodeEditor = ({ onCodeChange }) => {
     // Înregistrează limbajul personalizat
     monaco.languages.register({ id: "pseudocode" });
 
-    const keywords = ["citeste", "scrie", "daca", "atunci", "altfel", "cat timp", "pentru", "executa"];
+    const keywords = ["citeste", "scrie", "daca", "atunci", "altfel", "cat timp", "pentru", "executa", "repeta", "pana cand"];
     const operators = ["sau", "si", "egal", "diferit", "not"];
 
     let regkw = new RegExp(keywords.join("|"));
@@ -42,7 +42,7 @@ const CodeEditor = ({ onCodeChange }) => {
     });
 
     // Configurare completare automată
-    const autoComplete = ["citeste", "scrie", "daca", "atunci", "altfel", "sau", "si", "egal", "diferit", "not", "cat timp", "pentru", "executa"];
+    const autoComplete = ["citeste", "scrie", "daca", "atunci", "altfel", "sau", "si", "egal", "diferit", "not", "cat timp", "pentru", "executa", "repeta", "pana cand"];
     monaco.languages.registerCompletionItemProvider("pseudocode", {
       provideCompletionItems: () => ({
         suggestions: autoComplete.map((kw) => ({
