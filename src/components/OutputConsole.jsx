@@ -1,12 +1,15 @@
-import RunButton from "./RunButton"
-
-const NavBar = ({ runCode }) => {
-  return (
-    <div className="bg-gradient-to-r from-cyan-950 via-cyan-700 to-cyan-950 text-white p-4 flex justify-between items-center sticky top-0 z-10 shadow-md shadow-black">
-        <h1 className="font-mono font-extrabold text-4xl mx-2">Ruleaza pseudocod!</h1>
-        <RunButton runCode={runCode}/>
-    </div>
-  )
-}
-
-export default NavBar
+const OutputConsole = ({ output, textColor }) => {
+    const consoleClass = textColor === "white" ? "h-[30vh] w-full font-mono bg-black resize-none border-4 border-[#1e1e1e] rounded-lg p-4 text-white" : "h-[30vh] w-full font-mono bg-black resize-none border-4 border-[#1e1e1e] rounded-lg p-4 text-red-600";
+    return (
+      <textarea
+        className={consoleClass}
+        placeholder={"Aici se va vedea ce scrie programul:\n"}
+        readOnly 
+        value={output}
+      >
+      </textarea>
+    );
+  };
+  
+  export default OutputConsole;
+  
