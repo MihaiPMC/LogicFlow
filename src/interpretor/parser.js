@@ -50,7 +50,7 @@ function eatNewlines(tokens) {
     }
 }
 
-export function parser(tokens, rec_level = 0) {
+export function parser(tokens) {
     let instructions = []
 
     while ( tokens.length > 0 && tokens[0].type !== 'EOF' ) {
@@ -200,11 +200,11 @@ export function parser(tokens, rec_level = 0) {
                     let thenNode = null, elseNode = null
                     if ( thenBlock ) {
                         thenBlock.push(new Token('EOF', null))
-                        thenNode = parser(thenBlock, rec_level + 1)
+                        thenNode = parser(thenBlock)
                     }
                     if ( elseBlock ) {
                         elseBlock.push(new Token('EOF', null))
-                        elseNode = parser(elseBlock, rec_level + 1)
+                        elseNode = parser(elseBlock)
                     }
                     let postFixCondition = shuntingYard(condition)
                     console.log(postFixCondition)
@@ -257,7 +257,7 @@ export function parser(tokens, rec_level = 0) {
                     let thenNode = null
                     if ( thenBlock ) {
                         thenBlock.push(new Token('EOF', null))
-                        thenNode = parser(thenBlock, rec_level + 1)
+                        thenNode = parser(thenBlock)
                     }
                     let postFixCondition = shuntingYard(condition)
 
@@ -396,8 +396,8 @@ export function parser(tokens, rec_level = 0) {
                     thenBlock.push(new Token('EOF', null))
                     const initNode = new Node('ASSIGNMENT', varName, shuntingYard(initExp))
                     const postFixCondition = shuntingYard(cond)
-                    const incNode = parser(inc, rec_level + 1)
-                    const thenNode = parser(thenBlock, rec_level + 1)
+                    const incNode = parser(inc)
+                    const thenNode = parser(thenBlock)
                     const FORNode = new forNode(initNode, postFixCondition, incNode, thenNode)
                     instructions.push(new Node('FOR', FORNode))
                 }
@@ -433,7 +433,7 @@ export function parser(tokens, rec_level = 0) {
                     let thenNode = null
                     if ( thenBlock ) {
                         thenBlock.push(new Token('EOF', null))
-                        thenNode = parser(thenBlock, rec_level + 1)
+                        thenNode = parser(thenBlock)
                     }
                     let postFixCondition = shuntingYard(condition)
 
