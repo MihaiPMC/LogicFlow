@@ -382,6 +382,14 @@ function parseDaca(tokens) {
         elseBlock = parseBracedBlock(tokens);
       }
     }
+    console.log("Then bloc gasit!")
+    for ( let tk of thenBlock ) {
+        console.log(tk.value)
+    }
+    console.log("Else bloc gasit!")
+    for ( let tk of elseBlock ) {
+        console.log(tk.value)
+    }
     return { condition, thenBlock, elseBlock };
 }
 
@@ -392,7 +400,11 @@ function parseCatTimp(tokens) {
     eatNewlines(tokens);
     // Citim condiția până la token-ul "executa" sau o acoladă
     while (tokens.length > 0 && tokens[0].value !== 'executa' && tokens[0].type !== 'LBRACE') {
-      condition.push(tokens.shift());
+        if ( tokens[0].value === '=' ) {
+            tokens.shift() // Sari peste =
+            condition.push(new Token('OPERATOR', 'egal'))
+        }
+        condition.push(tokens.shift());
     }
     if (tokens[0] && tokens[0].value === 'executa') {
       tokens.shift(); // Sărim peste "executa"
@@ -463,6 +475,10 @@ function parseRepeta (tokens) {
         eatNewlines(tokens)
         condition = []
         while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].value !== '\n') {
+            if (tokens[0].value === '=') {
+                tokens.shift()
+                condition.push(new Token('OPERATOR', 'egal'))
+            }
             condition.push(tokens.shift())
         }
         found_condition = true
@@ -516,7 +532,11 @@ function getRepeta (tokens) {
     let block = []
     let {condition, thenBlock} = parseRepeta(tokens)
     block.push(new Token('KEYWORD', 'repeta'))
+    block.push(new Token ('LBRACE', '{'))
+    block.push(new Token ('NEWLINE', '\n'))
     block.push(...thenBlock)
+    block.push(new Token ('NEWLINE', '\n'))
+    block.push(new Token ('RBRACE', '}'))
     block.push(new Token('KEYWORD', 'pana cand'))
     block.push(...condition)
     return block
