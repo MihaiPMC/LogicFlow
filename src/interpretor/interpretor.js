@@ -1,4 +1,4 @@
-const sourceCode = 'citeste a, b, numar \n  a = (4+5) % (b - 3)  \n  b = b + 1  \n  scrie a,   numar, b'
+const sourceCode = 'citeste a, b, numars \n  a = (4+5) % (b - 3)  \n  b = b + 1  \n  scrie a,   numar'
 
 const KEYWORDS = [
     'citeste',
@@ -272,7 +272,6 @@ function evaluatePostfixExpression(tokens, variables) {
 async function main() {
     let variables = {}
     await evaluateNode(parser(lexer(sourceCode)), variables)
-    rl.close()
 }
 
 main()
