@@ -1,4 +1,4 @@
-const MAX_ITERATIONS = 100000
+const MAX_ITERATIONS = 1000000
 
 export function evaluateNode(node, variables, outputToConsole) {
     if (!node) return
@@ -8,12 +8,14 @@ export function evaluateNode(node, variables, outputToConsole) {
         }
     } 
     else if (node.type === 'INPUT') {
-        for (let varName of node.value) {
-            let value = prompt(`Introdu valoarea pentru variabila ${varName}: `)
-            variables[varName] = parseFloat(value)
-        }
+        let varName = node.value
+        let value = prompt(`Introdu valoarea pentru variabila ${varName}: `)
+        variables[varName] = parseFloat(value)
     } 
     else if (node.type === 'OUTPUT') {
+        if (!variables[node.value]) {
+            throw new Error(`Variabila "${node.value}" nu a fost definita!`)
+        }
         outputToConsole(variables[node.value].toString())
     } 
     else if (node.type === 'OUTPUTEXP') {
@@ -89,7 +91,10 @@ function evaluatePostfixExpression(tokens, variables) {
             stack.push(parseInt(token.value))
         } 
         else if (token.type === 'IDENTIFIER') {
-            stack.push(variables[token.value] ?? 0)
+            if (!variables[token.value]) {
+                throw new Error(`Variabila "${token.value}" nu a fost definita!`)
+            }
+            stack.push(variables[token.value])
         } 
         else if (token.type === 'OPERATOR') {
             if (token.value === 'not') {

@@ -80,7 +80,7 @@ const CodeEditor = ({ onCodeChange }) => {
 
   return (
     <Editor
-      className="w-75% h-[50vh]"
+      className="h-[50vh]"
       theme="pseudocode-theme"
       defaultLanguage="pseudocode"
       defaultValue={localStorage.getItem("code") || "// Scrie pseudocod aici"}

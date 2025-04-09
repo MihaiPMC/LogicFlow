@@ -39,7 +39,7 @@ const App = () => {
   return (
     <>
       <NavBar runCode={runCode} />
-      <div className="h-auto px-6 py-8 text-gray-800 flex flex-col gap-2">
+      <div className="w-full h-auto px-6 py-8 text-gray-800 flex flex-col gap-2">
         <CodeEditor onCodeChange={setCode} />
         <OutputConsole output={output} textColor = {textColor}/>
       </div>

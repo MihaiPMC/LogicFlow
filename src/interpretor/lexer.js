@@ -84,7 +84,7 @@ export function lexer(sourceCode) {
                 continue
             }
             else if ( ch === '/' && src[0] === '/' ) {
-                while ( src[0] !== '\n' ) {
+                while ( src.length > 0 && src[0] !== '\n') {
                     src.shift()
                 }
             }
