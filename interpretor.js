@@ -1,4 +1,4 @@
-const sourceCode = 'citeste a, b, numar\na = 4+(5   %  3) \nscrie a,   numar'
+const sourceCode = 'citeste a, b, numar\na = (4+5) % (b - 3) \n b = b + 1\nscrie a,   numar'
 
 const KEYWORDS = [
     'citeste',
@@ -12,7 +12,6 @@ const KEYWORDS = [
     'pentru',
     'executa',
     'atunci',
-
     'EOF',
 ]
 
@@ -33,7 +32,10 @@ function lexer(sourceCode) {
     const src = sourceCode.split('')
     while ( src.length > 0 ) { 
         let ch = src.shift()
-        if ( ch === '+' || ch === '-' || ch === '*' || ch === '/' || ch === '%' ) {
+        if ( ch === '\n' ) {
+            tokens.push(new Token('NEWLINE', ch))
+        }
+        else if ( ch === '+' || ch === '-' || ch === '*' || ch === '/' || ch === '%' ) {
             tokens.push(new Token('OPERATOR', ch))
         }
         else if ( ch === '=' ) {
@@ -50,7 +52,7 @@ function lexer(sourceCode) {
         }
         else {
             // Handle multi-character tokens
-            if ( ch === ' ' || ch === '\n' || ch === '\t' ) {
+            if ( ch === ' ' || ch === '\t' ) {
                 continue
             }
             else if ( ch >= '0' && ch <= '9' ) {
@@ -81,20 +83,135 @@ function lexer(sourceCode) {
     return tokens
 }
 
-const tokens = lexer(sourceCode)
-
 class Node {
-    constructor(type, value = null) {
+    constructor(type, value = null, children = []) {
         this.type = type
         this.value = value
-        this.children = []
+        this.children = children
+    }
+    addChild(node) {
+        this.children.push(node)
+    }
+    setChildren(children) {
+        this.children = children
+    }
+    setValue(value) {
+        this.value = value
+    }
+    setType(type) {
+        this.type = type
     }
 }
 
 function parser(tokens) {
-    let instruction = []
+    let instructions = []
 
+    while ( tokens[0].type !== 'EOF' ) {
+        let currToken = tokens.shift()
+        switch ( currToken.type ) {
+            case 'KEYWORD':
+                if ( currToken.value === 'citeste' ) {
+                    let vars = []
+                    while (tokens.length > 0) {
+                        if (tokens[0].type === 'IDENTIFIER') {
+                            vars.push(tokens.shift().value)
+                            if (tokens[0].type === 'COMMA') {
+                                tokens.shift()
+                            } else {
+                                break
+                            }
+                        } 
+                    }
+                    instructions.push(new Node('INPUT', vars))
+                }
+                else if ( currToken.value === 'scrie' ) {
+                    let vars = []
+                    while (tokens.length > 0) {
+                        if (tokens[0].type === 'IDENTIFIER') {
+                            vars.push(tokens.shift().value)
+                            if (tokens[0].type === 'COMMA') {
+                                tokens.shift()
+                            } else {
+                                break
+                            }
+                        } 
+                    }
+                    instructions.push(new Node('OUTPUT', vars))
+                }
+            case 'IDENTIFIER':
+                let varName = currToken.value
+                if (tokens.length > 0 && tokens[0].type === 'ASSIGN') {
+                    tokens.shift()
+                    
+                    expression = []
+                    while (tokens.length > 0 && tokens[0].type !== 'NEWLINE') {
+                        expression.push(tokens.shift())
+                    }
+                    
+                    // Transformam expresia din forma infixata in forma postfixata
+                    let postfixExpression = shuntingYard(expression)
+            
+                    // Cream nodul de atribuire si il adaugam in lista
+                    instructions.push(new Node("ASSIGNMENT", varName, postfixExpression))
+                }
+            default:
+                break
+        }
+    }
 
+    const program = new Node('PROGRAM', null, instructions)
 
-    return instructions
+    return program
 }
+
+function shuntingYard(tokens) {
+    let output = []
+    let stack = []
+
+    while (tokens.length > 0) {
+        let token = tokens.shift()
+        if (token.type === 'NUMBER' || token.type === 'IDENTIFIER') {
+            output.push(token)
+        }
+        else if (token.type === 'OPERATOR') {
+            while (stack.length > 0 && stack[stack.length - 1].type === 'OPERATOR') {
+                let op1 = token.value
+                let op2 = stack[stack.length - 1].value
+                if (op1 === '+' || op1 === '-') {
+                    if (op2 === '*' || op2 === '/' || op2 === '%' || op2 === '+' || op2 === '-') {
+                        output.push(stack.pop())
+                    }
+                    else {
+                        break
+                    }
+                }
+                else if (op1 === '*' || op1 === '/' || op1 === '%') {
+                    if (op2 === '*' || op2 === '/' || op2 === '%') {
+                        output.push(stack.pop())
+                    }
+                    else {
+                        break
+                    }
+                }
+            }
+            stack.push(token)
+        }
+        else if (token.type === 'LPAREN') {
+            stack.push(token)
+        }
+        else if (token.type === 'RPAREN') {
+            while (stack.length > 0 && stack[stack.length - 1].type !== 'LPAREN') {
+                output.push(stack.pop())
+            }
+            stack.pop()
+        }
+    }
+
+    while (stack.length > 0) {
+        output.push(stack.pop())
+    }
+
+    return output
+}
+
+console.dir(parser(lexer(sourceCode)), { depth: null })
