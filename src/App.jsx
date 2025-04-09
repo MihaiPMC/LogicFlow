@@ -4,11 +4,13 @@ import NavBar from "./components/NavBar";
 import { useState, useEffect, use } from "react";
 import { interpretor } from "./interpretor/interpretor";
 import SettingsOverlay from "./components/SettingsOverlay";
+import InstructionsOverlay from "./components/InstructionsOverlay";
 const App = () => {
   const [code, setCode] = useState("");
   const [output, setOutput] = useState("");
   const [textColor, setTextColor] = useState("white");
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [infoOpen, setInfoOpen] = useState(false);
 
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
   const [fontSize, setFontSize] = useState(localStorage.getItem("fontSize") || "16");
@@ -30,6 +32,9 @@ const App = () => {
 
   const handleOpenSettings = () => {setSettingsOpen(true)};
   const handleCloseSettings = () => {setSettingsOpen(false)};
+
+  const handleOpenInfo = () => {setInfoOpen(true)};
+  const handleCloseInfo = () => {setInfoOpen(false)};
 
   useEffect(() => {
     setCode(localStorage.getItem("code"));
@@ -61,12 +66,13 @@ const App = () => {
 
   return (
     <>
-      <NavBar runCode={runCode} openSettings={handleOpenSettings} />
+      <NavBar runCode={runCode} openSettings={handleOpenSettings} openInfo={handleOpenInfo} />
       <div className="w-full h-auto px-6 py-8 text-gray-800 flex flex-col gap-2">
         <CodeEditor onCodeChange={setCode} fontSize={fontSize} editorTheme={theme} wordWrap={wordWrap} />
         <OutputConsole output={output} textColor = {textColor}/>
       </div>
       {settingsOpen && <SettingsOverlay onClose={handleCloseSettings} updateSettings={updateSettings} />}
+      {infoOpen && <InstructionsOverlay onClose={handleCloseInfo} />}
     </>
   );
 };

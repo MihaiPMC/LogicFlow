@@ -7,7 +7,7 @@ const SettingsOverlay = ({ onClose, updateSettings }) => {
           </h2>
   
           <form className="flex flex-col gap-4">
-            <label className="inline-block font-mono">Tema editor text:</label>
+            <label className="text-lg font-bold inline-block font-mono">Temă editor text:</label>
             <select
               className="p-2 rounded-lg inline-block border border-gray-300 bg-gray-200 font-mono"
               defaultValue={localStorage.getItem("theme") || "dark"}
@@ -16,7 +16,7 @@ const SettingsOverlay = ({ onClose, updateSettings }) => {
               <option value="dark">Dark</option>
             </select>
   
-            <label className="inline-block font-mono">Dimensiune font:</label>
+            <label className="inline-block text-lg font-mono font-bold ">Dimensiune font:</label>
             <select
               className="p-2 rounded-lg inline-block border border-gray-300 bg-gray-200 font-mono"
               defaultValue={localStorage.getItem("fontSize") || "16"}
@@ -28,15 +28,14 @@ const SettingsOverlay = ({ onClose, updateSettings }) => {
               <option value="20">20px</option>
             </select>
   
-            <label className="inline-block font-mono">Word wrapping:</label>
+            <label className="inline-block text-lg font-mono font-bold ">Word wrapping:</label>
             <div className="flex items-center">
               <input type="checkbox" className="rounded-lg mr-2 size-4" defaultChecked={localStorage.getItem('wordWrap') === 'true'}/>
               <span className="font-mono">Da</span>
             </div>
   
-            <label className="inline-block font-mono">
-              Numar maxim de iteratii per structura repetitiva pana la iesire
-              fortata:
+            <label className="inline-block text-lg font-mono font-bold">
+              Numar maxim de iteratii per structură repetitivă pana la iesire fortată: (pentru a evita buclele infinite)
             </label>
             <input
               type="number"
