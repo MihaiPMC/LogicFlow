@@ -240,9 +240,7 @@ export function parser(tokens) {
                         if (tokens[0].value !== '{') {
                             // Daca nu avem acolade, atunci avem doar o singura instructiune
                             thenBlock = []
-                            while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].value !== '\n') {
-                                thenBlock.push(tokens.shift())
-                            }
+                            thenBlock = parseStatement(tokens)
                             found_then = true
                         }
                     }
