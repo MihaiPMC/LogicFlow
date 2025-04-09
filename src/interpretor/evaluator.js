@@ -60,8 +60,12 @@ function evaluatePostfixExpression(tokens, variables) {
                 else if (token.value === '%') stack.push(op1 % op2)
                 else if (token.value === '>') stack.push(op1 > op2 ? 1 : 0)
                 else if (token.value === '<') stack.push(op1 < op2 ? 1 : 0)
+                else if (token.value === '>=') stack.push(op1 >= op2 ? 1 : 0)
+                else if (token.value === '<=') stack.push(op1 <= op2 ? 1 : 0)
                 else if (token.value === 'si') stack.push(op1 && op2 ? 1 : 0)
                 else if (token.value === 'sau') stack.push(op1 || op2 ? 1 : 0)
+                else if (token.value === 'egal') stack.push(op1 === op2 ? 1 : 0)
+                else if (token.value === 'diferit') stack.push(op1 !== op2 ? 1 : 0)
             }
         }
     }

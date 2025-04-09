@@ -41,8 +41,12 @@ export function lexer(sourceCode) {
         else if ( ch === '=' ) {
             tokens.push(new Token('ASSIGN', ch))
         }
-        else if ( ch === '>' || ch === '<' ) {
-            tokens.push(new Token('OPERATOR', ch))
+        else if (ch === '<' || ch === '>') {
+            if (src[0] === '=') {
+                tokens.push(new Token('OPERATOR', ch + src.shift()));
+            } else {
+                tokens.push(new Token('OPERATOR', ch));
+            }
         }
         else if ( ch === ',' ) {
             tokens.push(new Token('COMMA', ch))

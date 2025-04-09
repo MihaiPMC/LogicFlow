@@ -165,15 +165,16 @@ function shuntingYard(tokens) {
     let stack = []
 
     function precedence(op) {
-        if (op === 'not') return 5 // Operator unar NOT are cea mai mare prioritate
-        if (op === '*' || op === '/' || op === '%') return 4
-        if (op === '+' || op === '-') return 3
-        if (op === '>' || op === '<') return 2
+        if (op === 'not') return 6 // Operator unar NOT are cea mai mare prioritate
+        if (op === '*' || op === '/' || op === '%') return 5
+        if (op === '+' || op === '-') return 4
+        if (op === '>' || op === '<' || op === '<=' || op === '>=') return 3
+        if (op === 'egal' || op === 'diferit') return 2 // Egalitate și diferență au prioritate mai mică decât comparația
         if (op === 'si') return 1
         if (op === 'sau') return 0 // Cea mai mică prioritate
         return -1
     }
-
+    
     while (tokens.length > 0) {
         let token = tokens.shift()
 
@@ -207,53 +208,3 @@ function shuntingYard(tokens) {
 
     return output
 }
-
-
-// function shuntingYard(tokens) {
-//     let output = []
-//     let stack = []
-
-//     while (tokens.length > 0) {
-//         let token = tokens.shift()
-//         if (token.type === 'NUMBER' || token.type === 'IDENTIFIER') {
-//             output.push(token)
-//         }
-//         else if (token.type === 'OPERATOR') {
-//             while (stack.length > 0 && stack[stack.length - 1].type === 'OPERATOR') {
-//                 let op1 = token.value
-//                 let op2 = stack[stack.length - 1].value
-//                 if (op1 === '+' || op1 === '-') {
-//                     if (op2 === '*' || op2 === '/' || op2 === '%' || op2 === '+' || op2 === '-') {
-//                         output.push(stack.pop())
-//                     }
-//                     else {
-//                         break
-//                     }
-//                 }
-//                 else if (op1 === '*' || op1 === '/' || op1 === '%') {
-//                     if (op2 === '*' || op2 === '/' || op2 === '%') {
-//                         output.push(stack.pop())
-//                     }
-//                     else {
-//                         break
-//                     }
-//                 }
-//             }
-//             stack.push(token)
-//         }
-//         else if (token.type === 'LPAREN') {
-//             stack.push(token)
-//         }
-//         else if (token.type === 'RPAREN') {
-//             while (stack.length > 0 && stack[stack.length - 1].type !== 'LPAREN') {
-//                 output.push(stack.pop())
-//             }
-//             stack.pop()
-//         }
-//     }
-
-//     while (stack.length > 0) {
-//         output.push(stack.pop())
-//     }
-//     return output
-// }
