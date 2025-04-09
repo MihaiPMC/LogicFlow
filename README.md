@@ -1,5 +1,7 @@
 # 📜 LogicFlow - Interpretor de Pseudocod
 
+# This project is a fork of [this repository](https://github.com/danielmitrache/LogicFlow-Pseudocode_Interpretor/tree/main)
+
 ## 📌 Descriere
 Interpretorul de pseudocod este o aplicație web destinată elevilor care doresc să învețe informatică și să înțeleagă mai bine structura algoritmilor. Acesta oferă o sintaxă prietenoasă, inspirată din pseudocodul utilizat în manuale și la examenul de bacalaureat.
 
