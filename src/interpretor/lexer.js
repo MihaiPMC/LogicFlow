@@ -4,6 +4,9 @@ const KEYWORDS = [
     'daca',
     'atunci',
     'altfel',
+    'cat_timp',
+    'pentru',
+    'executa',
     'EOF',
 ]
 
@@ -97,7 +100,7 @@ export function lexer(sourceCode) {
             }
             else if ( isAlpha(ch) ) {
                 let id = ch
-                while ( isAlpha(src[0]) ) {
+                while ( isAlpha(src[0]) || isDigit(src[0]) || src[0] === '_' ) {
                     id += src.shift()
                 }
                 if ( KEYWORDS.includes(id) ) {

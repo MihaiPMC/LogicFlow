@@ -28,6 +28,13 @@ class ifNode{
     }
 }
 
+class whileNode {
+    constructor(condition, block) {
+        this.condition = condition
+        this.block = block
+    }
+}
+
 function eatNewlines(tokens) {
     while (tokens.length > 0 && tokens[0].type === 'NEWLINE') {
         tokens.shift()
@@ -110,7 +117,7 @@ export function parser(tokens, rec_level = 0) {
                             thenBlock = []
                             let ifs = 1
                             eatNewlines(tokens)
-                            while (tokens.length > 0 && ifs > 0 && tokens[0].type !== 'EOF' && tokens[0].type !== 'NEWLINE') {
+                            while (tokens.length > 0 && ifs > 0 && tokens[0].type !== 'EOF' && tokens[0].value !== '\n') {
                                 if (tokens[0].value === 'daca') 
                                     ifs ++
                                 else if (tokens[0].value === 'altfel'){
@@ -195,6 +202,59 @@ export function parser(tokens, rec_level = 0) {
                     let IFNode = new ifNode(postFixCondition, thenNode, elseNode)
                     instructions.push(new Node('IF', IFNode))
                 }
+                else if ( currToken.value === 'cat_timp' ) {
+                    // Cazul in care avem un while
+                    let found_condition = false, found_then = false
+                    let condition = []
+                    let thenBlock = []
+                    eatNewlines(tokens)
+                    while (tokens.length > 0 && tokens[0].value !== 'executa' && tokens[0].type !== 'LBRACE') {
+                        condition.push(tokens.shift())
+                    }
+                    found_condition = true
+
+                    if (tokens[0].value === 'executa') {
+                        tokens.shift() //Sari peste executa
+                        eatNewlines(tokens)
+                        // E posibil sa fie un while scris pe o linie: cat_timp <conditie> executa <instr1>
+                        if (tokens[0].value !== '{') {
+                            // Daca nu avem acolade, atunci avem doar o singura instructiune
+                            thenBlock = []
+                            while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].type !== 'NEWLINE') {
+                                thenBlock.push(tokens.shift())
+                            }
+                            found_then = true
+                        }
+                    }
+                    if(tokens[0].value === '{' && !found_then) {
+                        tokens.shift() //Sari peste {
+                        eatNewlines(tokens)
+                        thenBlock = []
+                        let brackets = 1
+                        while (tokens.length > 0 && brackets > 0 && tokens[0].type !== 'EOF' ) {
+                            if (tokens[0].type === 'LBRACE') {
+                                brackets ++
+                            }
+                            else if (tokens[0].type === 'RBRACE') {
+                                brackets --
+                                if (brackets === 0) {
+                                    break
+                                }
+                            }
+                            thenBlock.push(tokens.shift())
+                        }
+                    }
+
+                    let thenNode = null
+                    if ( thenBlock ) {
+                        thenBlock.push(new Token('EOF', null))
+                        thenNode = parser(thenBlock, rec_level + 1)
+                    }
+                    let postFixCondition = shuntingYard(condition)
+
+                    let WHILENode = new whileNode(postFixCondition, thenNode)
+                    instructions.push(new Node('WHILE', WHILENode))
+                }
             case 'IDENTIFIER':
                 let varName = currToken.value
                 if (tokens.length > 0 && tokens[0].type === 'ASSIGN') {
@@ -227,7 +287,7 @@ function shuntingYard(tokens) {
         if (op === 'not') return 6 
         if (op === '*' || op === '/' || op === '%') return 5
         if (op === '+' || op === '-') return 4
-        if (op === '>' || op === '<') return 3
+        if (op === '>' || op === '<' || op === '>=' || op === '<=') return 3
         if (op === 'egal' || op === 'diferit') return 2
         if (op === 'si') return 1
         if (op === 'sau') return 0

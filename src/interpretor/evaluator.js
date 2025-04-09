@@ -27,12 +27,21 @@ export function evaluateNode(node, variables, outputToConsole) {
     else if (node.type === 'IF') {
         let IFNode = node.value
         let condition = evaluatePostfixExpression(IFNode.condition, variables)
+        console.log(condition)
         if (condition) {
             evaluateNode(IFNode.thenBlock, variables, outputToConsole)
         } else if (IFNode.elseBlock) {
             evaluateNode(IFNode.elseBlock, variables, outputToConsole)
         }
     }
+    // else if (node.type === 'WHILE') {
+    //     let WHILENode = node.value
+    //     let condition = evaluatePostfixExpression(WHILENode.condition, variables)
+    //     while (condition) {
+    //         evaluateNode(WHILENode.block, variables, outputToConsole)
+    //         condition = evaluatePostfixExpression(WHILENode.condition, variables)
+    //     }
+    // }
 }
 
 function evaluatePostfixExpression(tokens, variables) {
@@ -55,7 +64,7 @@ function evaluatePostfixExpression(tokens, variables) {
             }
             else if (token.value === 'int') {
                 let op = stack.pop()
-                stack.push(Math.floor(op))
+                stack.push(Math.floor(op)) // Aplica partea întreagă
             }
             else {
                 let op2 = stack.pop()
@@ -68,6 +77,8 @@ function evaluatePostfixExpression(tokens, variables) {
                 else if (token.value === '%') stack.push(op1 % op2)
                 else if (token.value === '>') stack.push(op1 > op2 ? 1 : 0)
                 else if (token.value === '<') stack.push(op1 < op2 ? 1 : 0)
+                else if (token.value === '>=') stack.push(op1 >= op2 ? 1 : 0)
+                else if (token.value === '<=') stack.push(op1 <= op2 ? 1 : 0)
                 else if (token.value === 'egal') stack.push(op1 === op2 ? 1 : 0)
                 else if (token.value === 'diferit') stack.push(op1 !== op2 ? 1 : 0)
                 else if (token.value === 'si') stack.push(op1 && op2 ? 1 : 0)
