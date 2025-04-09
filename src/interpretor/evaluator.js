@@ -13,7 +13,7 @@ export function evaluateNode(node, variables, outputToConsole) {
         variables[varName] = parseFloat(value)
     } 
     else if (node.type === 'OUTPUT') {
-        if (variables[node.value] === null) {
+        if (variables[node.value] === undefined) {
             throw new Error(`Variabila "${node.value}" nu a fost definita!`)
         }
         outputToConsole(variables[node.value].toString())
@@ -89,9 +89,12 @@ function evaluatePostfixExpression(tokens, variables) {
         let token = exprTokens.shift()
         
         if (token.type === 'NUMBER') {
-            stack.push(parseInt(token.value))
+            stack.push(parseFloat(token.value))
         } 
         else if (token.type === 'IDENTIFIER') {
+            if (variables[token.value] === undefined) {
+                throw new Error(`Variabila "${token.value}" nu a fost definita!`)
+            }
             stack.push(variables[token.value] ?? 0)
         } 
         else if (token.type === 'OPERATOR') {
@@ -123,6 +126,8 @@ function evaluatePostfixExpression(tokens, variables) {
             }
         }
     }
-
+    if (stack.length > 1) {
+        throw new Error('Expresie invalida!')
+    }
     return stack.pop()
 }

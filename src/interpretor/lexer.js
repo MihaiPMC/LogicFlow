@@ -51,6 +51,11 @@ export function lexer(sourceCode) {
             tokens.push(new Token('ASSIGN', ch))
         }
         else if (ch === '<' || ch === '>') {
+            if ( ch === '<' && src[0] === '-') {
+                tokens.push(new Token('ASSIGN', '='))
+                src.shift()
+                continue
+            }
             if (src[0] === '=') {
                 tokens.push(new Token('OPERATOR', ch + src.shift()));
             } else {
@@ -109,7 +114,7 @@ export function lexer(sourceCode) {
             }
             else if ( isDigit(ch) || ch === '-') {
                 let num = ch
-                while ( isDigit(src[0]) ) {
+                while ( isDigit(src[0]) || src[0] === '.' ) {
                     num += src.shift()
                 }
                 if ( num === '-' ) {

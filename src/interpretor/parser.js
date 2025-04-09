@@ -484,9 +484,10 @@ function shuntingYard(tokens) {
         if (op === '*' || op === '/' || op === '%') return 5
         if (op === '+' || op === '-') return 4
         if (op === '>' || op === '<' || op === '>=' || op === '<=') return 3
-        if (op === 'egal' || op === 'diferit') return 2
-        if (op === 'si') return 1
-        if (op === 'sau') return 0
+        if (op === 'si') return 2
+        if (op === 'sau') return 1
+        if (op === 'egal' || op === 'diferit') return 0
+
         return -1
     }
 
