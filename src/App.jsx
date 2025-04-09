@@ -11,7 +11,7 @@ const App = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
-  const [fontSize, setFontSize] = useState(localStorage.getItem("fontSize") || "16px");
+  const [fontSize, setFontSize] = useState(localStorage.getItem("fontSize") || "16");
   const [wordWrap, setWordWrap] = useState(localStorage.getItem("wordWrap") === "true");
   const [maxIterations, setMaxIterations] = useState(localStorage.getItem("maxIterations") || 100000);
   const updateSettings = (theme, fontSize, wordWrap, maxIterations) => {

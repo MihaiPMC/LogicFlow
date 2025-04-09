@@ -288,16 +288,17 @@ export function parser(tokens) {
                     if (tokens[0].value === 'executa') {
                         tokens.shift() //Sari peste executa
                         eatNewlines(tokens)
-                        // E posibil sa fie un for scris pe o linie: pentru <conditie> executa <instr1>
-                        if (tokens[0].value !== '{') {
-                            eatNewlines(tokens)
-                            // Daca nu avem acolade, atunci avem doar o singura instructiune
-                            thenBlock = []
-                            while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].value !== '\n') {
-                                thenBlock.push(tokens.shift())
-                            }
-                            found_then = true
-                        }
+                        // // E posibil sa fie un for scris pe o linie: pentru <conditie> executa <instr1>
+                        // if (tokens[0].value !== '{') {
+                        //     eatNewlines(tokens)
+                        //     // Daca nu avem acolade, atunci avem doar o singura instructiune
+                        //     thenBlock = []
+                        //     while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].value !== '\n') {
+                        //         thenBlock.push(tokens.shift())
+                        //     }
+                        //     found_then = true
+                        // }
+                        thenBlock = parseStatement(tokens)
                     }
                     if (tokens[0].value === '{' && !found_then) {
                         tokens.shift() //Sari peste {
@@ -539,4 +540,71 @@ function shuntingYard(tokens) {
     }
 
     return output
+}
+
+function parseStatement(tokens) {
+    let block = [];
+    while (tokens.length > 0) {
+        let token = tokens[0];
+        if ( token.type === 'EOF' ) {
+            break
+        }
+        if (token.type === 'LBRACE') {
+            // Bloc explicit cu { ... }
+            block.push(tokens.shift()); // Consumă '{'
+            block.push(...parseBracedBlock(tokens));
+        } else if (isBlockKeyword(token.value)) {
+            // Sub-bloc (e.g., alt pentru, daca)
+            block.push(tokens.shift()); // Consumă cuvântul cheie
+            let statement = parseStatement(tokens); // Recursivitate!
+            block.push(...statement);
+        } else if (token.type === 'NEWLINE') {
+            // Verifică dacă linia următoare face parte din același bloc
+            eatNewlines(tokens);
+            if (tokens.length === 0 || !isContinuationToken(tokens[0]) && !isContinuationToken(block[block.length - 1])) {
+                break
+            }
+        } else {
+            // Adaugă token-uri simple (e.g., expresii, comenzi)
+            block.push(tokens.shift());
+        }
+    }
+    console.log("Bloc de instruciuni detectat: ")
+    for ( let tk of block ) {
+        console.log(tk.value)
+    }
+    return block;
+}
+
+function isBlockKeyword(value) {
+    return ['daca', 'cat timp', 'pentru', 'repeta'].includes(value);
+}
+
+function isContinuationToken(token) {
+    // Verifică dacă următorul token este parte dintr-o structură imbricată
+    // (e.g., 'altfel', 'executa', 'atunci')
+    return ['altfel', 'executa', 'atunci'].includes(token.value);
+}
+
+function parseBracedBlock(tokens) {
+    let block = [];
+    let brackets = 1; // Am consumat deja '{' inițial, deci începem de la 1
+
+    while (tokens.length > 0 && brackets > 0) {
+        const token = tokens.shift(); // Luăm următorul token
+
+        if (token.type === 'LBRACE') {
+            brackets++; // Bloc imbricat: crește contorul
+        } else if (token.type === 'RBRACE') {
+            brackets--; // Închide un bloc: scade contorul
+        }
+
+        block.push(token); // Adaugă token-ul la bloc (inclusiv '{' imbricate)
+    }
+
+    if (brackets !== 0) {
+        throw new Error("Acoladă neînchisă!");
+    }
+
+    return block; // Returnează token-urile dintre {} (fără acolada finală)
 }
