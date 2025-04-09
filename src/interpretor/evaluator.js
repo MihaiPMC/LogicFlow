@@ -1,10 +1,9 @@
-const MAX_ITERATIONS = 100000
 
-export function evaluateNode(node, variables, outputToConsole) {
+export function evaluateNode(node, variables, outputToConsole, MAX_ITERATIONS) {
     if (!node) return
     if (node.type === 'PROGRAM') {
         for (let childNode of node.children) {
-            evaluateNode(childNode, variables, outputToConsole) 
+            evaluateNode(childNode, variables, outputToConsole, MAX_ITERATIONS) 
         }
     } 
     else if (node.type === 'INPUT') {
@@ -34,9 +33,9 @@ export function evaluateNode(node, variables, outputToConsole) {
         let condition = evaluatePostfixExpression(IFNode.condition, variables)
         console.log(condition)
         if (condition) {
-            evaluateNode(IFNode.thenBlock, variables, outputToConsole)
+            evaluateNode(IFNode.thenBlock, variables, outputToConsole, MAX_ITERATIONS)
         } else if (IFNode.elseBlock) {
-            evaluateNode(IFNode.elseBlock, variables, outputToConsole)
+            evaluateNode(IFNode.elseBlock, variables, outputToConsole, MAX_ITERATIONS)
         }
     }
     else if (node.type === 'WHILE') {
@@ -44,7 +43,7 @@ export function evaluateNode(node, variables, outputToConsole) {
         let condition = evaluatePostfixExpression(WHILENode.condition, variables)
         let count = 0
         while (condition) {
-            evaluateNode(WHILENode.block, variables, outputToConsole)
+            evaluateNode(WHILENode.block, variables, outputToConsole, MAX_ITERATIONS)
             condition = evaluatePostfixExpression(WHILENode.condition, variables)
             count ++
             if ( count > MAX_ITERATIONS) {
@@ -60,8 +59,8 @@ export function evaluateNode(node, variables, outputToConsole) {
         console.log(variables)
         let count = 0
         while (evaluatePostfixExpression(FORNode.condition, variables)) {
-            evaluateNode(FORNode.block, variables, outputToConsole);
-            evaluateNode(STEPNode, variables, outputToConsole);
+            evaluateNode(FORNode.block, variables, outputToConsole, MAX_ITERATIONS);
+            evaluateNode(STEPNode, variables, outputToConsole, MAX_ITERATIONS);
             count ++
             if ( count > MAX_ITERATIONS) {
                 throw new Error ('Bucla infinita!')
@@ -72,7 +71,7 @@ export function evaluateNode(node, variables, outputToConsole) {
         let DO_WHILENode = node.value
         let count = 0
         do {
-            evaluateNode(DO_WHILENode.block, variables, outputToConsole)
+            evaluateNode(DO_WHILENode.block, variables, outputToConsole, MAX_ITERATIONS)
             count ++
             if ( count > MAX_ITERATIONS) {
                 throw new Error ('Bucla infinita!')
