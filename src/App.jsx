@@ -2,6 +2,7 @@ import CodeEditor from "./components/CodeEditor";
 import OutputConsole from "./components/OutputConsole";
 import NavBar from "./components/NavBar";
 import { useState, useEffect } from "react";
+import { interpretor } from "./interpretor/interpretor";
 const App = () => {
   const [code, setCode] = useState("");
   const [output, setOutput] = useState("");
@@ -10,9 +11,13 @@ const App = () => {
     setCode(localStorage.getItem("code"));
   }, [code]);
 
+  const outputToConsole = (text) => {
+    setOutput((prevOutput) => prevOutput + text + "\n");
+  }
+
   const runCode = () => {
-    console.log(code);
-    setOutput(code);
+    setOutput("");
+    const outputVariables = interpretor(code, outputToConsole);
   };
 
   return (
