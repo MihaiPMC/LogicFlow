@@ -12,7 +12,15 @@ const App = () => {
   }, [code]);
 
   const outputToConsole = (text) => {
-    setOutput((prevOutput) => prevOutput + text + "\n");
+    for ( let i = 0; i < text.length; i ++ ) {
+      if ( text[i] === "\\" && text[i + 1] === 'n' ) {
+        setOutput((prevOutput) => prevOutput + "\n");
+        i ++;
+      }
+      else {
+        setOutput((prevOutput) => prevOutput + text[i]);
+      }
+    }
   }
 
   const runCode = () => {

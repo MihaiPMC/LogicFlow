@@ -11,10 +11,11 @@ export function evaluateNode(node, variables, outputToConsole) {
         }
     } 
     else if (node.type === 'OUTPUT') {
-        outputToConsole(variables[node.value])
+        outputToConsole(variables[node.value].toString())
     } 
     else if (node.type === 'OUTPUTEXP') {
         let value = evaluatePostfixExpression(node.value, variables)
+        value = value.toString()
         outputToConsole(value)
     }
     else if (node.type === 'OUTPUTSTR') {
@@ -52,6 +53,10 @@ function evaluatePostfixExpression(tokens, variables) {
                 let op = stack.pop()
                 stack.push(op ? 0 : 1)
             }
+            else if (token.value === 'int') {
+                let op = stack.pop()
+                stack.push(Math.floor(op))
+            }
             else {
                 let op2 = stack.pop()
                 let op1 = stack.pop()
@@ -63,12 +68,10 @@ function evaluatePostfixExpression(tokens, variables) {
                 else if (token.value === '%') stack.push(op1 % op2)
                 else if (token.value === '>') stack.push(op1 > op2 ? 1 : 0)
                 else if (token.value === '<') stack.push(op1 < op2 ? 1 : 0)
-                else if (token.value === '>=') stack.push(op1 >= op2 ? 1 : 0)
-                else if (token.value === '<=') stack.push(op1 <= op2 ? 1 : 0)
-                else if (token.value === 'si') stack.push(op1 && op2 ? 1 : 0)
-                else if (token.value === 'sau') stack.push(op1 || op2 ? 1 : 0)
                 else if (token.value === 'egal') stack.push(op1 === op2 ? 1 : 0)
                 else if (token.value === 'diferit') stack.push(op1 !== op2 ? 1 : 0)
+                else if (token.value === 'si') stack.push(op1 && op2 ? 1 : 0)
+                else if (token.value === 'sau') stack.push(op1 || op2 ? 1 : 0)
             }
         }
     }

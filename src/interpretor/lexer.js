@@ -26,16 +26,20 @@ function isAlpha(ch) {
     return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
 }
 
+function isDigit(ch) {
+    return ch >= '0' && ch <= '9'
+}
+
 export function lexer(sourceCode) {
     const tokens = []
     
     const src = sourceCode.split('')
     while ( src.length > 0 ) { 
         let ch = src.shift()
-        if ( ch === '\n' ) {
+        if ( ch === '\n' || ch === ';' ) {
             tokens.push(new Token('NEWLINE', ch))
         }
-        else if ( ch === '+' || ch === '-' || ch === '*' || (ch === '/' && src[0] !== '/') || ch === '%' ) {
+        else if ( ch === '+' || (ch === '-' && (tokens[tokens.length - 1].type == 'NUMBER' || tokens[tokens.length - 1].type == 'IDENTIFIER')) || ch === '*' || (ch === '/' && src[0] !== '/') || ch === '%' ) {
             tokens.push(new Token('OPERATOR', ch))
         }
         else if ( ch === '=' ) {
@@ -63,6 +67,12 @@ export function lexer(sourceCode) {
         else if ( ch === '}' ){
             tokens.push(new Token('RBRACE', ch))
         }
+        else if ( ch === '[' ){
+            tokens.push(new Token('LSQUAREBRACE', ch))
+        }
+        else if ( ch === ']' ){
+            tokens.push(new Token('RSQUAREBRACE', ch))
+        }
         else {
             // Handle multi-character tokens
             if ( ch === ' ' || ch === '\t' || ch === '\r' ) {
@@ -73,12 +83,17 @@ export function lexer(sourceCode) {
                     src.shift()
                 }
             }
-            else if ( ch >= '0' && ch <= '9' ) {
+            else if ( isDigit(ch) || ch === '-') {
                 let num = ch
-                while ( src[0] >= '0' && src[0] <= '9' ) {
+                while ( isDigit(src[0]) ) {
                     num += src.shift()
                 }
-                tokens.push(new Token('NUMBER', num))
+                if ( num === '-' ) {
+                    tokens.push(new Token('NUMBER', '-1'))
+                    tokens.push(new Token('OPERATOR', '*'))
+                }
+                else
+                    tokens.push(new Token('NUMBER', num))
             }
             else if ( isAlpha(ch) ) {
                 let id = ch
