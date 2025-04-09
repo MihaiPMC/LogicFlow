@@ -382,14 +382,18 @@ function parseDaca(tokens) {
         elseBlock = parseBracedBlock(tokens);
       }
     }
-    console.log("Then bloc gasit!")
-    for ( let tk of thenBlock ) {
-        console.log(tk.value)
+    // // console.log("Then bloc gasit!")
+    // for ( let tk of thenBlock ) {
+    //     console.log(tk.value)
+    // }
+    // // console.log("Else bloc gasit!")
+    // for ( let tk of elseBlock ) {
+    //     console.log(tk.value)
+    // }
+    if (condition.length === 0 || thenBlock.length === 0 || (condition.length === 0 && thenBlock.length === 0 && elseBlock.length !== 0)) {
+        throw new Error('Sintaxa pentru "daca" este invalida')
     }
-    console.log("Else bloc gasit!")
-    for ( let tk of elseBlock ) {
-        console.log(tk.value)
-    }
+
     return { condition, thenBlock, elseBlock };
 }
 
@@ -415,6 +419,9 @@ function parseCatTimp(tokens) {
         tokens.shift(); // Sărim peste '{'
         thenBlock = parseBracedBlock(tokens);
       }
+    }
+    if (condition.length === 0 || thenBlock.length === 0) {
+        throw new Error('Sintaxa pentru "cat timp" este invalida')
     }
     return { condition, thenBlock };
 }
@@ -445,10 +452,13 @@ function parsePentru (tokens) {
         eatNewlines(tokens)
         thenBlock.push(...parseBracedBlock(tokens))
     }
-    console.log("Bloc gasit!")
-    for ( let tk of thenBlock ) {
-        console.log(tk.value)
+    if (!found_condition || !found_then) {
+        throw new Error('Sintaxa pentru "pentru" este invalida')
     }
+    // console.log("Bloc gasit!")
+    // for ( let tk of thenBlock ) {
+    //     console.log(tk.value)
+    // }
     return {condition, thenBlock}
 }
 
@@ -482,6 +492,9 @@ function parseRepeta (tokens) {
             condition.push(tokens.shift())
         }
         found_condition = true
+    }
+    if (!found_condition || !found_then) {
+        throw new Error('Sintaxa pentru "repeta" este invalida')
     }
     return {condition, thenBlock}
 }

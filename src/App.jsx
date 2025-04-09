@@ -5,6 +5,8 @@ import { useState, useEffect, use } from "react";
 import { interpretor } from "./interpretor/interpretor";
 import SettingsOverlay from "./components/SettingsOverlay";
 import InstructionsOverlay from "./components/InstructionsOverlay";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 const App = () => {
   const [code, setCode] = useState("");
   const [output, setOutput] = useState("");
@@ -16,11 +18,13 @@ const App = () => {
   const [fontSize, setFontSize] = useState(localStorage.getItem("fontSize") || "16");
   const [wordWrap, setWordWrap] = useState(localStorage.getItem("wordWrap") === "true");
   const [maxIterations, setMaxIterations] = useState(localStorage.getItem("maxIterations") || 100000);
-  const updateSettings = (theme, fontSize, wordWrap, maxIterations) => {
+  const [AIassisted, setAIassisted] = useState(localStorage.getItem("AIassisted") === "true");
+  const updateSettings = (theme, fontSize, wordWrap, maxIterations, AIassisted) => {
     setTheme(theme);
     setFontSize(fontSize);
     setWordWrap(wordWrap);
     setMaxIterations(maxIterations);
+    setAIassisted(AIassisted);
   }
 
   useEffect(() => {
@@ -28,7 +32,8 @@ const App = () => {
     localStorage.setItem("fontSize", fontSize);
     localStorage.setItem("wordWrap", wordWrap);
     localStorage.setItem("maxIterations", maxIterations);
-  }, [theme, fontSize, wordWrap, maxIterations]);
+    localStorage.setItem("AIassisted", AIassisted);
+  }, [theme, fontSize, wordWrap, maxIterations, AIassisted]);
 
   const handleOpenSettings = () => {setSettingsOpen(true)};
   const handleCloseSettings = () => {setSettingsOpen(false)};
@@ -52,15 +57,27 @@ const App = () => {
     }
   }
 
-  const runCode = () => {
+  const runCode = async () => {
+    let refactoredCode = 0;
     try {
       setOutput("");
       setTextColor("white");
-      const outputVariables = interpretor(code, outputToConsole, maxIterations);
-    }
-    catch (err) {
+      refactoredCode = await interpretor(code, outputToConsole, maxIterations, AIassisted);
+    } catch (err) {
       setTextColor("red");
       setOutput("Eroare la interpretare: " + err.message);
+    } finally {
+      if (refactoredCode !== 0) {
+        toast.info("Codul tau pare sa aive erori, dar au fost corectate de AI!", {
+          position: "bottom-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          theme: "light",
+        });
+      }
     }
   };
 
@@ -73,6 +90,18 @@ const App = () => {
       </div>
       {settingsOpen && <SettingsOverlay onClose={handleCloseSettings} updateSettings={updateSettings} />}
       {infoOpen && <InstructionsOverlay onClose={handleCloseInfo} />}
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
     </>
   );
 };

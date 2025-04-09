@@ -83,7 +83,7 @@ export function lexer(sourceCode) {
         else if ( ch === ']' ){
             tokens.push(new Token('RSQUAREBRACE', ch))
         }
-        else if ( ch === '!' ){
+        else if ( ch === '!' && src[0] !== '=' ) {
             tokens.push(new Token('OPERATOR', 'not'))
         }
         else {
@@ -97,7 +97,7 @@ export function lexer(sourceCode) {
                 src.shift()
             }
             else if ( ch === '!' && src[0] === '=' ) {
-                tokens.push(new Token('OPERATOR', 'not') )
+                tokens.push(new Token('OPERATOR', 'diferit') )
                 src.shift()
             }
             else if ( ch === '=' && src[0] === '=' ) {

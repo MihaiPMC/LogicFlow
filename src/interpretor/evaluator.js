@@ -34,7 +34,6 @@ export function evaluateNode(node, variables, outputToConsole, MAX_ITERATIONS) {
     else if (node.type === 'IF') {
         let IFNode = node.value
         let condition = evaluatePostfixExpression(IFNode.condition, variables)
-        console.log(condition)
         if (condition) {
             evaluateNode(IFNode.thenBlock, variables, outputToConsole, MAX_ITERATIONS)
         } else if (IFNode.elseBlock) {
@@ -76,7 +75,7 @@ export function evaluateNode(node, variables, outputToConsole, MAX_ITERATIONS) {
             evaluateNode(DO_WHILENode.block, variables, outputToConsole, MAX_ITERATIONS)
             count ++
             if ( count > MAX_ITERATIONS) {
-                throw new Error ('Bucla infinita!')
+                throw new Error ('Bucla infinita')
             }
         } while (!evaluatePostfixExpression(DO_WHILENode.condition, variables))
     }
@@ -128,7 +127,7 @@ function evaluatePostfixExpression(tokens, variables) {
         }
     }
     if (stack.length > 1) {
-        throw new Error('Expresie invalida!')
+        throw new Error('Expresie invalida')
     }
     return stack.pop()
 }
