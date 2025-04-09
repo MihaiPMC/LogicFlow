@@ -47,7 +47,7 @@ export function lexer(sourceCode) {
         else if ( ch === '+' || (ch === '-' && (tokens[tokens.length - 1].type == 'NUMBER' || tokens[tokens.length - 1].type == 'IDENTIFIER')) || ch === '*' || (ch === '/' && src[0] !== '/') || ch === '%' ) {
             tokens.push(new Token('OPERATOR', ch))
         }
-        else if ( ch === '=' ) {
+        else if ( ch === '=' && src[0] !== '=' ) {
             tokens.push(new Token('ASSIGN', ch))
         }
         else if (ch === '<' || ch === '>') {
@@ -78,9 +78,28 @@ export function lexer(sourceCode) {
         else if ( ch === ']' ){
             tokens.push(new Token('RSQUAREBRACE', ch))
         }
+        else if ( ch === '!' ){
+            tokens.push(new Token('OPERATOR', 'not'))
+        }
         else {
             // Handle multi-character tokens
-            if ( ch === ' ' || ch === '\t' || ch === '\r' ) {
+            if ( ch === '&' && src[0] === '&' ) {
+                tokens.push(new Token('OPERATOR', 'si'))
+                src.shift()
+            }
+            else if ( ch === '|' && src[0] === '|' ) {
+                tokens.push(new Token('OPERATOR', 'sau'))
+                src.shift()
+            }
+            else if ( ch === '!' && src[0] === '=' ) {
+                tokens.push(new Token('OPERATOR', 'not') )
+                src.shift()
+            }
+            else if ( ch === '=' && src[0] === '=' ) {
+                tokens.push(new Token('OPERATOR', 'egal') )
+                src.shift()
+            }
+            else if ( ch === ' ' || ch === '\t' || ch === '\r' ) {
                 continue
             }
             else if ( ch === '/' && src[0] === '/' ) {

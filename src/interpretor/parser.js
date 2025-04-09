@@ -94,6 +94,12 @@ export function parser(tokens) {
                             let expression = []
                             let valid_expression = false
                             while (i < vars.length && vars[i].type !== 'COMMA' && vars[i].type !== 'NEWLINE' && vars[i].type !== 'EOF' && vars[i].type !== 'RBRACE' && vars[i].type !== 'LBRACE' && vars[i].type !== 'KEYWORD') {
+                                if (vars[i].value === '=') {
+                                    valid_expression = true
+                                    expression.push(new Token('OPERATOR', 'egal'))
+                                    i ++
+                                    continue
+                                }
                                 if (vars[i].type === 'OPERATOR')
                                     valid_expression = true
                                 expression.push(vars[i])
@@ -104,7 +110,7 @@ export function parser(tokens) {
                                 instructions.push(new Node('OUTPUTEXP', postfixExpression))
                             }
                             else {
-                                console.log('Invalid expression')
+                                throw new Error('Expresie invalida la scriere')
                             }
                         }
                     }
@@ -115,6 +121,11 @@ export function parser(tokens) {
                     let condition = []
                     eatNewlines(tokens)
                     while (tokens.length > 0 && tokens[0].value !== 'atunci' && tokens[0].type !== 'LBRACE') {
+                        if (tokens[0].value === '=') {
+                            tokens.shift() //Sari peste =
+                            condition.push(new Token('OPERATOR', 'egal'))
+                            continue
+                        }
                         condition.push(tokens.shift())
                     }
                     found_condition = true
