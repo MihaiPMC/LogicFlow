@@ -17,6 +17,9 @@ export function evaluateNode(node, variables, outputToConsole) {
         let value = evaluatePostfixExpression(node.value, variables)
         outputToConsole(value)
     }
+    else if (node.type === 'OUTPUTSTR') {
+        outputToConsole(node.value)
+    }
     else if (node.type === 'ASSIGNMENT') {
         variables[node.value] = evaluatePostfixExpression(node.children, variables)
     }

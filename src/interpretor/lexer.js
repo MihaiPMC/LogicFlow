@@ -95,6 +95,14 @@ export function lexer(sourceCode) {
                     tokens.push(new Token('IDENTIFIER', id))
                 }
             }
+            else if ( ch === '"') {
+                let str = ''
+                while ( src[0] !== '"' ) {
+                    str += src.shift()
+                }
+                src.shift()
+                tokens.push(new Token('STRING', str))
+            }
             else {
                 throw new Error(`Invalid character: ${ch}, ASCII: ${ch.charCodeAt(0)}`)
             }

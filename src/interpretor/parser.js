@@ -64,6 +64,9 @@ export function parser(tokens, rec_level = 0) {
                         if ( vars[i].type === 'IDENTIFIER' && ( i === vars.length - 1 || vars[i + 1].type === 'COMMA' ) ) {
                             instructions.push(new Node('OUTPUT', vars[i].value))
                         }
+                        else if ( vars[i].type === 'STRING' ) {
+                            instructions.push(new Node('OUTPUTSTR', vars[i].value))
+                        }
                         else if (vars[i].type === 'COMMA') {
                             continue
                         }
@@ -156,7 +159,7 @@ export function parser(tokens, rec_level = 0) {
     }
 
     const program = new Node('PROGRAM', null, instructions)
-
+    console.dir(program, { depth: null })
     return program
 }
 
