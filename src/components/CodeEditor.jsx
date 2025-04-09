@@ -1,14 +1,19 @@
 import { Editor } from "@monaco-editor/react";
 import { useState, useEffect } from "react";
 import { useRef } from "react";
-const CodeEditor = ({ onCodeChange }) => {
 
-  function handleEditorMount(editor, monaco) {
+const CodeEditor = ({ onCodeChange, fontSize, editorTheme, wordWrap, code }) => {
+  const editorRef = useRef();
+  const [monaco, setMonaco] = useState(null);
+  const [currentCode, setCurrentCode] = useState(code || localStorage.getItem("code") || "// Scrie pseudocod aici");
+
+  function handleEditorMount(editor, monacoInstance) {
     editorRef.current = editor;
+    setMonaco(monacoInstance);
     editor.focus();
 
     // Înregistrează limbajul personalizat
-    monaco.languages.register({ id: "pseudocode" });
+    monacoInstance.languages.register({ id: "pseudocode" });
 
     const keywords = ["citeste", "scrie", "daca", "atunci", "altfel", "cat timp", "pentru", "executa", "repeta", "pana cand"];
     const operators = ["sau", "si", "egal", "diferit", "not"];
@@ -16,7 +21,7 @@ const CodeEditor = ({ onCodeChange }) => {
     let regkw = new RegExp(`\\b(${keywords.join("|")})\\b`);
     let regop = new RegExp(`\\b(${operators.join("|")})\\b`);
     // Setează regulile de tokenizare (highlighting) pentru pseudocode
-    monaco.languages.setMonarchTokensProvider("pseudocode", {
+    monacoInstance.languages.setMonarchTokensProvider("pseudocode", {
       keywords,
       tokenizer: {
         root: [
@@ -37,7 +42,7 @@ const CodeEditor = ({ onCodeChange }) => {
     });
 
     // Configurarea limbajului (comentarii, paranteze etc.)
-    monaco.languages.setLanguageConfiguration("pseudocode", {
+    monacoInstance.languages.setLanguageConfiguration("pseudocode", {
       comments: { lineComment: "//" },
       brackets: [
         ["{", "}"],
@@ -48,18 +53,18 @@ const CodeEditor = ({ onCodeChange }) => {
 
     // Configurare completare automată
     const autoComplete = ["citeste", "scrie", "daca", "atunci", "altfel", "sau", "si", "egal", "diferit", "not", "cat timp", "pentru", "executa", "repeta", "pana cand"];
-    monaco.languages.registerCompletionItemProvider("pseudocode", {
+    monacoInstance.languages.registerCompletionItemProvider("pseudocode", {
       provideCompletionItems: () => ({
         suggestions: autoComplete.map((kw) => ({
           label: kw,
-          kind: monaco.languages.CompletionItemKind.Keyword,
+          kind: monacoInstance.languages.CompletionItemKind.Keyword,
           insertText: kw,
         })),
       }),
     });
 
     // Definirea temei personalizate
-    monaco.editor.defineTheme("pseudocode-theme", {
+    monacoInstance.editor.defineTheme("pseudocode-dark-theme", {
       base: "vs-dark",
       inherit: true,
       rules: [
@@ -73,20 +78,69 @@ const CodeEditor = ({ onCodeChange }) => {
       colors: {},
     });
 
-    monaco.editor.setTheme("pseudocode-theme");
+    monacoInstance.editor.defineTheme("pseudocode-light-theme", {
+      base: "vs", // Use the built-in light theme as the base
+      inherit: true,
+      rules: [
+        { token: "keyword", foreground: "0000FF" },
+        { token: "identifier", foreground: "000000" },
+        { token: "number", foreground: "098658" },
+        { token: "string", foreground: "A31515" },
+        { token: "operator", foreground: "000000" },
+        { token: "comment", foreground: "008000" },
+      ],
+      colors: {
+        "editor.background": "#FFFFFF", // Set the editor background to white
+      },
+    });
+
+    if (editorTheme === "light") {
+      monacoInstance.editor.setTheme("pseudocode-light-theme");
+    } else if (editorTheme === "dark") {
+      monacoInstance.editor.setTheme("pseudocode-dark-theme");
+    }
+
+    // Trigger initial code change to populate the C++ view
+    const initialCode = code || localStorage.getItem("code") || "// Scrie pseudocod aici";
+    setCurrentCode(initialCode);
+    onCodeChange(initialCode);
   }
 
-  const editorRef = useRef();
+  const handleEditorChange = (value) => {
+    setCurrentCode(value);
+    onCodeChange(value);
+    localStorage.setItem("code", value);
+  };
+
+  useEffect(() => {
+    if (editorRef.current && monaco) {
+      const editor = editorRef.current;
+      editor.updateOptions({
+        fontSize: parseInt(fontSize, 10),
+        wordWrap: wordWrap ? "on" : "off",
+      });
+      monaco.editor.setTheme(editorTheme === "light" ? "pseudocode-light-theme" : "pseudocode-dark-theme");
+    }
+  }, [fontSize, editorTheme, wordWrap, monaco]);
 
   return (
-    <Editor
-      className="h-[50vh]"
-      theme="pseudocode-theme"
-      defaultLanguage="pseudocode"
-      defaultValue={localStorage.getItem("code") || "// Scrie pseudocod aici"}
-      onMount={handleEditorMount}
-      onChange={(value) => {onCodeChange(value); localStorage.setItem("code", value);}}
-    />
+    <div className="relative">
+      <Editor
+        className="h-[50vh]"
+        theme="pseudocode-theme"
+        defaultLanguage="pseudocode"
+        value={code}
+        defaultValue={localStorage.getItem("code") || "// Scrie pseudocod aici"}
+        onMount={handleEditorMount}
+        onChange={handleEditorChange}
+        options={{
+          automaticLayout: true, // Ensure the editor resizes automatically
+          padding: { top: 20 }, // Add padding to the top
+          wordWrap: wordWrap ? "on" : "off", // Enable word wrapping
+          fontSize: parseInt(fontSize, 10),
+        }}
+      />
+    </div>
   );
 };
 

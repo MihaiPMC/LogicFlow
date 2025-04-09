@@ -62,15 +62,42 @@ export function parser(tokens) {
                     while ( tokens.length > 0 && (tokens[0].type !== 'NEWLINE' && tokens[0].type !== 'EOF') ) {
                         vars.push(tokens.shift())
                     }
-                    for ( let i = 0; i < vars.length; i++ ) {
-                        if ( vars[i].type === 'IDENTIFIER') {
-                            instructions.push(new Node('INPUT', vars[i].value))
-                        }
-                        else if ( vars[i].type === 'COMMA' ) {
-                            continue
-                        }
-                        else {
-                            throw new Error('Variabila invalida')
+
+                    // Process the variables to be read
+                    let i = 0;
+                    while (i < vars.length) {
+                        if (vars[i].type === 'IDENTIFIER') {
+                            // Check if this is an array element (followed by '[')
+                            if (i + 1 < vars.length && vars[i + 1].type === 'LBRACKET') {
+                                // Extract vector name
+                                const vectorName = vars[i].value;
+
+                                // Extract the index expression between brackets
+                                let indexExpr = [];
+                                i += 2; // Skip the identifier and '['
+                                while (i < vars.length && vars[i].type !== 'RBRACKET') {
+                                    indexExpr.push(vars[i].value);
+                                    i++;
+                                }
+
+                                // Skip the closing bracket if found
+                                if (i < vars.length && vars[i].type === 'RBRACKET') {
+                                    i++;
+                                }
+
+                                // Build the vector element identifier string: name[index]
+                                const vectorElemId = `${vectorName}[${indexExpr.join('')}]`;
+                                instructions.push(new Node('INPUT', vectorElemId));
+                            } else {
+                                // Regular variable
+                                instructions.push(new Node('INPUT', vars[i].value));
+                                i++;
+                            }
+                        } else if (vars[i].type === 'COMMA') {
+                            i++;
+                        } else {
+                            // Skip any other tokens or handle as needed
+                            i++;
                         }
                     }
                 }
@@ -90,7 +117,6 @@ export function parser(tokens) {
                             continue
                         }
                         else {
-                            // Avem o expresie
                             let expression = []
                             let valid_expression = false
                             while (i < vars.length && vars[i].type !== 'COMMA' && vars[i].type !== 'NEWLINE' && vars[i].type !== 'EOF' && vars[i].type !== 'RBRACE' && vars[i].type !== 'LBRACE' && vars[i].type !== 'KEYWORD') {
@@ -100,11 +126,17 @@ export function parser(tokens) {
                                     i ++
                                     continue
                                 }
-                                if (vars[i].type === 'OPERATOR')
+                                // Consider any token with a value as potentially valid
+                                if (vars[i].type === 'OPERATOR' || vars[i].type === 'NUMBER' || 
+                                    vars[i].type === 'IDENTIFIER' || vars[i].type === 'LPAREN' || 
+                                    vars[i].type === 'RPAREN' || vars[i].type === 'LBRACKET' || 
+                                    vars[i].type === 'RBRACKET') {
                                     valid_expression = true
+                                }
                                 expression.push(vars[i])
                                 i ++
                             }
+                            i--; // Adjust for loop increment
                             if (valid_expression || expression.length === 1) {
                                 let postfixExpression = shuntingYard(expression)
                                 instructions.push(new Node('OUTPUTEXP', postfixExpression))
@@ -114,6 +146,7 @@ export function parser(tokens) {
                             }
                         }
                     }
+                    instructions.push(new Node('NEWLINE'));
                 }
                 else if ( currToken.value === 'daca' ) {
                     let {condition, thenBlock, elseBlock} = parseDaca(tokens)
@@ -127,7 +160,7 @@ export function parser(tokens) {
                         elseNode = parser(elseBlock)
                     }
                     let postFixCondition = shuntingYard(condition)
-                    console.log(postFixCondition)
+                   // console.log(postFixCondition)
                     let IFNode = new ifNode(postFixCondition, thenNode, elseNode)
                     instructions.push(new Node('IF', IFNode))
                 }
@@ -255,17 +288,60 @@ export function parser(tokens) {
                 let varName = currToken.value
                 if (tokens.length > 0 && tokens[0].type === 'ASSIGN') {
                     tokens.shift()
-                    
+
                     let expression = []
                     while (tokens.length > 0 && tokens[0].type !== 'NEWLINE') {
                         expression.push(tokens.shift())
                     }
-                    
+
                     // Transformam expresia din forma infixata in forma postfixata
                     let postfixExpression = shuntingYard(expression)
-            
+
                     // Cream nodul de atribuire si il adaugam in lista
                     instructions.push(new Node("ASSIGNMENT", varName, postfixExpression))
+                }
+                else if (tokens.length > 0 && tokens[0].type === 'LBRACKET') {
+                    tokens.shift(); // remove '['
+                    let sizeExpr = [];
+                    while (tokens.length > 0 && tokens[0].type !== 'RBRACKET') {
+                        sizeExpr.push(tokens.shift());
+                    }
+                    tokens.shift(); // remove ']'
+                    if (tokens.length > 0 && tokens[0].type === 'ASSIGN') {
+                        tokens.shift(); // remove '='
+                        if (tokens.length > 0 && tokens[0].type === 'LBRACE') {
+                            tokens.shift(); // remove '{'
+                            let elements = [];
+                            let currentElement = [];
+                            while (tokens.length > 0 && tokens[0].type !== 'RBRACE') {
+                                if (tokens[0].type === 'COMMA') {
+                                    elements.push(shuntingYard(currentElement));
+                                    currentElement = [];
+                                    tokens.shift(); // remove comma
+                                } else {
+                                    currentElement.push(tokens.shift());
+                                }
+                            }
+                            if (currentElement.length > 0) {
+                                elements.push(shuntingYard(currentElement));
+                            }
+                            tokens.shift(); // remove '}'
+                            instructions.push(new Node("VECTOR_INIT", varName, { size: shuntingYard(sizeExpr), elements }));
+                        } else {
+                            throw new Error("Expected '{' for vector initialization");
+                        }
+                    } else {
+                        instructions.push(new Node("VECTOR_ALLOC", varName, shuntingYard(sizeExpr)));
+                    }
+                }
+                else if (tokens.length > 0 && tokens[0].type === 'ASSIGN') {
+                    tokens.shift();
+                    let expression = [];
+                    while (tokens.length > 0 && tokens[0].type !== 'NEWLINE') {
+                        expression.push(tokens.shift());
+                    }
+                    let postfixExpression = shuntingYard(expression);
+                    instructions.push(new Node("ASSIGNMENT", varName, postfixExpression));
                 }
             default:
                 break
@@ -274,13 +350,16 @@ export function parser(tokens) {
 
     const program = new Node('PROGRAM', null, instructions)
     console.dir(program, { depth: null })
+    if (program.children.length === 0 && tokens.length > 0) {
+        throw new Error("Programul nu contine instructiuni")
+    }
     return program
 }
 
 function shuntingYard(tokens) {
 
     function precedence(op) {
-        if (op === 'not') return 6 
+        if (op === 'not') return 6
         if (op === '*' || op === '/' || op === '%') return 5
         if (op === '+' || op === '-') return 4
         if (op === '>' || op === '<' || op === '>=' || op === '<=') return 3
@@ -297,7 +376,7 @@ function shuntingYard(tokens) {
     while (tokens.length > 0) {
         let token = tokens.shift()
 
-        if (token.type === 'NUMBER' || token.type === 'IDENTIFIER') {
+        if (token.type === 'NUMBER' || token.type === 'IDENTIFIER' || token.type === 'STRING') {
             output.push(token)
         }
         else if (token.type === 'OPERATOR') {
@@ -313,15 +392,22 @@ function shuntingYard(tokens) {
             }
             stack.push(token)
         }
-        else if (token.type === 'LSQUAREBRACE') {
+        else if (token.type === 'LSQUAREBRACE' || token.type === 'LBRACKET') {
             stack.push(token)
         }
-        else if (token.type === 'RSQUAREBRACE') {
-            while (stack.length > 0 && stack[stack.length - 1].type !== 'LSQUAREBRACE') {
+        else if (token.type === 'RSQUAREBRACE' || token.type === 'RBRACKET') {
+            while (stack.length > 0 && 
+                   stack[stack.length - 1].type !== 'LSQUAREBRACE' && 
+                   stack[stack.length - 1].type !== 'LBRACKET') {
                 output.push(stack.pop())
             }
-            stack.pop() 
-            output.push(new Token('OPERATOR', 'int'))
+            if (stack.length > 0) {
+                stack.pop() // Remove the left bracket
+                // Add an 'index' operator to the output
+                output.push(new Token('OPERATOR', 'index'))
+            } else {
+                throw new Error("Unmatched right square bracket")
+            }
         }
         else if (token.type === 'LPAREN') {
             stack.push(token)
@@ -345,42 +431,42 @@ function parseDaca(tokens) {
     let condition = [];
     let thenBlock = [];
     let elseBlock = [];
-  
+
     eatNewlines(tokens);
     // Citim condiția până la token-ul "atunci" sau până la o acoladă
     while (tokens.length > 0 && tokens[0].value !== 'atunci' && tokens[0].type !== 'LBRACE') {
-      if (tokens[0].value === '=') {
-        tokens.shift(); // Sărim peste '='
-        condition.push(new Token('OPERATOR', 'egal'));
-      } else {
-        condition.push(tokens.shift());
-      }
+        if (tokens[0].value === '=') {
+            tokens.shift(); // Sărim peste '='
+            condition.push(new Token('OPERATOR', 'egal'));
+        } else {
+            condition.push(tokens.shift());
+        }
     }
-  
+
     // Partea "atunci"
     if (tokens[0] && tokens[0].value === 'atunci') {
-      tokens.shift(); // Sărim peste "atunci"
-      eatNewlines(tokens);
-      if (tokens[0] && tokens[0].value !== '{') {
-        // Fără acolade → o singură instrucțiune (posibil imbricată)
-        thenBlock = parseSingleStatement(tokens);
-      } else if (tokens[0] && tokens[0].value === '{') {
-        tokens.shift(); // Sărim peste '{'
-        thenBlock = parseBracedBlock(tokens);
-      }
+        tokens.shift(); // Sărim peste "atunci"
+        eatNewlines(tokens);
+        if (tokens[0] && tokens[0].value !== '{') {
+            // Fără acolade → o singură instrucțiune (posibil imbricată)
+            thenBlock = parseSingleStatement(tokens);
+        } else if (tokens[0] && tokens[0].value === '{') {
+            tokens.shift(); // Sărim peste '{'
+            thenBlock = parseBracedBlock(tokens);
+        }
     }
-  
+
     eatNewlines(tokens);
     // Partea "altfel", dacă există
     if (tokens[0] && tokens[0].value === 'altfel') {
-      tokens.shift(); // Sărim peste "altfel"
-      eatNewlines(tokens);
-      if (tokens[0] && tokens[0].value !== '{') {
-        elseBlock = parseSingleStatement(tokens);
-      } else if (tokens[0] && tokens[0].value === '{') {
-        tokens.shift(); // Sărim peste '{'
-        elseBlock = parseBracedBlock(tokens);
-      }
+        tokens.shift(); // Sărim peste "altfel"
+        eatNewlines(tokens);
+        if (tokens[0] && tokens[0].value !== '{') {
+            elseBlock = parseSingleStatement(tokens);
+        } else if (tokens[0] && tokens[0].value === '{') {
+            tokens.shift(); // Sărim peste '{'
+            elseBlock = parseBracedBlock(tokens);
+        }
     }
     // // console.log("Then bloc gasit!")
     // for ( let tk of thenBlock ) {
@@ -400,7 +486,7 @@ function parseDaca(tokens) {
 function parseCatTimp(tokens) {
     let condition = [];
     let thenBlock = [];
-  
+
     eatNewlines(tokens);
     // Citim condiția până la token-ul "executa" sau o acoladă
     while (tokens.length > 0 && tokens[0].value !== 'executa' && tokens[0].type !== 'LBRACE') {
@@ -411,14 +497,14 @@ function parseCatTimp(tokens) {
         condition.push(tokens.shift());
     }
     if (tokens[0] && tokens[0].value === 'executa') {
-      tokens.shift(); // Sărim peste "executa"
-      eatNewlines(tokens);
-      if (tokens[0] && tokens[0].value !== '{') {
-        thenBlock = parseSingleStatement(tokens);
-      } else if (tokens[0] && tokens[0].value === '{') {
-        tokens.shift(); // Sărim peste '{'
-        thenBlock = parseBracedBlock(tokens);
-      }
+        tokens.shift(); // Sărim peste "executa"
+        eatNewlines(tokens);
+        if (tokens[0] && tokens[0].value !== '{') {
+            thenBlock = parseSingleStatement(tokens);
+        } else if (tokens[0] && tokens[0].value === '{') {
+            tokens.shift(); // S��rim peste '{'
+            thenBlock = parseBracedBlock(tokens);
+        }
     }
     if (condition.length === 0 || thenBlock.length === 0) {
         throw new Error('Sintaxa pentru "cat timp" este invalida')
@@ -434,31 +520,35 @@ function parsePentru (tokens) {
     while (tokens.length > 0 && tokens[0].value !== 'executa' && tokens[0].type !== 'LBRACE') {
         condition.push(tokens.shift())
     }
-    found_condition = true
+    found_condition = condition.length > 0
 
-    if (tokens[0].value === 'executa') {
+    if (tokens.length > 0 && tokens[0].value === 'executa') {
         tokens.shift() //Sari peste executa
         eatNewlines(tokens)
         // E posibil sa fie un for scris pe o linie: pentru <conditie> executa <instr1>
-        if (tokens[0].value !== '{') {
+        if (tokens.length > 0 && tokens[0].value !== '{') {
             eatNewlines(tokens)
             // Daca nu avem acolade, atunci avem doar o singura instructiune
             thenBlock = parseSingleStatement(tokens)
-            found_then = true
+            found_then = thenBlock.length > 0
         }
     }
-    if (tokens[0].value === '{' && !found_then) {
-        thenBlock.push(tokens.shift()) //Sari peste {
+    
+    if (tokens.length > 0 && tokens[0].type === 'LBRACE') {
+        tokens.shift() //Sari peste {
         eatNewlines(tokens)
-        thenBlock.push(...parseBracedBlock(tokens))
+        thenBlock = parseBracedBlock(tokens)
+        found_then = true
     }
-    if (!found_condition || !found_then) {
-        throw new Error('Sintaxa pentru "pentru" este invalida')
+    
+    if (!found_condition) {
+        throw new Error('Sintaxa pentru "pentru": lipsește condiția')
     }
-    // console.log("Bloc gasit!")
-    // for ( let tk of thenBlock ) {
-    //     console.log(tk.value)
-    // }
+    
+    if (!found_then) {
+        throw new Error('Sintaxa pentru "pentru": lipsește blocul de instrucțiuni după "executa"')
+    }
+    
     return {condition, thenBlock}
 }
 
@@ -469,7 +559,7 @@ function parseRepeta (tokens) {
 
     let repetas = 1
     while (tokens.length > 0 && repetas > 0 && tokens[0].type !== 'EOF' ) {
-        if (tokens[0].value === 'repeta') 
+        if (tokens[0].value === 'repeta')
             repetas ++
         else if (tokens[0].value === 'pana cand') {
             repetas --
@@ -587,7 +677,7 @@ function parseStatement(tokens) {
     if (isBlockKeyword(token.value)) {
         let keyword = tokens.shift() // Consumă cuvântul cheie
         let statement = []
-        
+
         if (keyword.value === 'pentru') {
             statement = getPentru(tokens)
         }
@@ -637,3 +727,4 @@ function parseSingleStatement(tokens) {
     eatNewlines(tokens)
     return block
 }
+

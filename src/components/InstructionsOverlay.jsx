@@ -1,15 +1,29 @@
-import CodeSnippet from "./CodeSnippet";
-import InstructionsParagraph from "./InstructionsParagraph";
-import InstructionsTitle from "./InstructionsTitle";
-const SettingsOverlay = ({ onClose }) => {
-    return (
-      <div className="fixed inset-0 flex justify-center items-center z-20 bg-gray-900 backdrop-blur-3xl opacity-90">
-        <div className="bg-gray-100 p-8 rounded-lg shadow-lg w-[90%] md:w-1/2 z-30  overflow-y-auto max-h-[90vh]">
-          <h2 className="text-2xl font-mono font-extrabold mb-4 underline">
+import React from 'react';
+import InstructionsTitle from './InstructionsTitle';
+import InstructionsParagraph from './InstructionsParagraph';
+import CodeSnippet from './CodeSnippet';
+
+const InstructionsOverlay = ({ onClose }) => {
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 flex justify-center items-center z-20 bg-black/70 backdrop-blur-md" onClick={handleBackdropClick}>
+      <div className="bg-gray-100/95 backdrop-blur-sm p-8 rounded-lg shadow-lg w-[90%] md:w-1/2 z-30 max-h-[80vh] overflow-y-auto relative">
+        <button 
+          className="absolute top-2 right-3 text-gray-600 hover:text-red-600 text-xl font-bold"
+          onClick={onClose}
+        >
+          X
+        </button>
+        <h2 className="text-2xl font-extrabold mb-4 underline">
             Instrucțiuni
           </h2>
 
-          <h3 className="text-lg font-mono font-bold mt-4">Observatie! Nu exista tipuri, insa o variabila poate avea ca valoare numai un numar intreg sau rational.</h3>
+          <h3 className="text-lg font-bold mt-4">Observatie! Nu exista tipuri, insa o variabila poate avea ca valoare numai un numar intreg sau rational.</h3>
 
           <InstructionsTitle text="1. Instrucțiunea de atribuire" />
           <InstructionsParagraph text='Variabilele pot fi atribuite cu un număr întreg sau rațional prin "=" sau "<-".' />
@@ -47,17 +61,27 @@ const SettingsOverlay = ({ onClose }) => {
           <CodeSnippet code='cat timp n diferit 0 executa {\n    cnt = cnt + 1\n    n = [n / 10]\n}\n// Mai compact:\ncat timp n != 0 executa cnt = cnt + 1; n = [n / 10]\nscrie cnt' />
           <InstructionsParagraph text="Repetă până când:" />
           <CodeSnippet code='repeta\n     x = x - 1\npana cand x egal 5\n// Mai compact:\nrepeta scrie x, " "; x = x - 1 pana cand x = 0' />
+          
+          <InstructionsTitle text="8. Manipularea vectorilor" />
+          <InstructionsParagraph text="Vectorii se pot aloca și inițializa folosind parantezele drepte pentru dimensiunea vectorului și acoladele pentru elementele sale." />
+          <CodeSnippet code="v[5]\nv[5] = { 1, 2, 3, 4, 5 }" />
+          <CodeSnippet code="scrie v[2]" />
 
+          <InstructionsTitle text="9. Manipularea șirurilor de caractere" />
+          <InstructionsParagraph text="Șirurile de caractere se scriu între ghilimele și pot fi concatenate folosind operatorul +." />
+          <CodeSnippet code='s = "Hello, " + "World!"' />
+          <CodeSnippet code="scrie s[1]" />
+          
           <button
-            className="mt-4 py-2 px-4 font-mono font-black bg-red-500 text-white rounded hover:bg-red-700 transition-all duration-500 hover:cursor-pointer"
+            className="mt-4 py-2 px-4 font-black bg-red-500 text-white rounded hover:bg-red-700 transition-all duration-500 hover:cursor-pointer"
             onClick={onClose}
           >
             Închide
           </button>
-        </div>
       </div>
-    );
-  };
-  
-  export default SettingsOverlay;
-  
+    </div>
+  );
+};
+
+export default InstructionsOverlay;
+

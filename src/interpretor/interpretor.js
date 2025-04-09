@@ -1,25 +1,51 @@
-const OPENAI_API_KEY = ''
 const URL = 'https://api.openai.com/v1/chat/completions'
 
 import { parser } from './parser.js'
 import { evaluateNode } from './evaluator.js'
 import { lexer } from './lexer.js'
 export async function interpretor(sourceCode, outputToConsole, maxIterations, isAIassisted) {
+    // Create a custom output function that handles newlines appropriately
+    let buffer = '';
+    const handleOutput = (text, addNewline = false) => {
+        if (addNewline) {
+            // When a newline is requested, output the buffer and then clear it
+            outputToConsole(buffer, true);
+            buffer = '';
+        } else {
+            // Add text to the buffer
+            buffer += text;
+        }
+    };
+    
     try {
         let tokens = lexer(sourceCode);
         let ast = parser(tokens);
         let variables = {};
-        evaluateNode(ast, variables, outputToConsole, maxIterations);
+        evaluateNode(ast, variables, handleOutput, maxIterations);
+        // If there's anything left in the buffer at the end, output it
+        if (buffer.length > 0) {
+            outputToConsole(buffer, true);
+        }
         return 0;
     } catch (err) {
         if (isAIassisted) {
             const refactoredCode = await refactorAllCode(sourceCode);
             sourceCode = refactoredCode;
             try {
+                // Clear the output before running refactored code
+                buffer = '';
+                outputToConsole(""); // Clear the output
+
                 let tokens = lexer(sourceCode);
                 let ast = parser(tokens);
                 let variables = {};
-                evaluateNode(ast, variables, outputToConsole, maxIterations);
+                evaluateNode(ast, variables, handleOutput, maxIterations);
+                
+                // Output any remaining buffer content
+                if (buffer.length > 0) {
+                    outputToConsole(buffer, true);
+                }
+                
                 return sourceCode;
             } catch (err) {
                 throw new Error(`${err.message} \n Refactored code: ${refactoredCode}`);
@@ -30,6 +56,9 @@ export async function interpretor(sourceCode, outputToConsole, maxIterations, is
         }
     }
 }
+
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+
 
 const refactorAllCode = async (code) => {
     const prompt = `Esti un asistent AI care are scopul de a asista elevii de liceu in interpretarea pseudocodului.
@@ -151,20 +180,22 @@ const refactorAllCode = async (code) => {
     const response = await fetch(URL, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-4-turbo",
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.1,
+            model: "gpt-4-turbo",
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.1,
         }),
     });
 
     if (!response.ok) {
         throw new Error(`Error: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
     return data.choices[0].message.content;
 }
+
+

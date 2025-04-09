@@ -44,7 +44,7 @@ export function lexer(sourceCode) {
         if ( ch === '\n' || ch === ';' ) {
             tokens.push(new Token('NEWLINE', ch))
         }
-        else if ( ch === '+' || (ch === '-' && (tokens[tokens.length - 1].type == 'NUMBER' || tokens[tokens.length - 1].type == 'IDENTIFIER')) || ch === '*' || (ch === '/' && src[0] !== '/') || ch === '%' ) {
+        else if ( ch === '+' || (ch === '-' && (tokens[tokens.length - 1]?.type == 'NUMBER' || tokens[tokens.length - 1]?.type == 'IDENTIFIER' || tokens[tokens.length - 1]?.type == 'RSQUAREBRACE')) || ch === '*' || (ch === '/' && src[0] !== '/') || ch === '%' ) {
             tokens.push(new Token('OPERATOR', ch))
         }
         else if ( ch === '=' && src[0] !== '=' ) {
@@ -78,12 +78,12 @@ export function lexer(sourceCode) {
             tokens.push(new Token('RBRACE', ch))
         }
         else if ( ch === '[' ){
-            tokens.push(new Token('LSQUAREBRACE', ch))
+            tokens.push(new Token('LBRACKET', ch))
         }
         else if ( ch === ']' ){
-            tokens.push(new Token('RSQUAREBRACE', ch))
+            tokens.push(new Token('RBRACKET', ch))
         }
-        else if ( ch === '!' && src[0] !== '=' ) {
+        else if ( ch === '!' ){
             tokens.push(new Token('OPERATOR', 'not'))
         }
         else {
@@ -97,7 +97,7 @@ export function lexer(sourceCode) {
                 src.shift()
             }
             else if ( ch === '!' && src[0] === '=' ) {
-                tokens.push(new Token('OPERATOR', 'diferit') )
+                tokens.push(new Token('OPERATOR', 'not') )
                 src.shift()
             }
             else if ( ch === '=' && src[0] === '=' ) {
@@ -162,8 +162,11 @@ export function lexer(sourceCode) {
             }
             else if ( ch === '"') {
                 let str = ''
-                while ( src[0] !== '"' ) {
+                while (src.length > 0 && src[0] !== '"') {
                     str += src.shift()
+                }
+                if (src.length === 0) {
+                    throw new Error("Unclosed string literal")
                 }
                 src.shift()
                 tokens.push(new Token('STRING', str))
@@ -174,8 +177,6 @@ export function lexer(sourceCode) {
         }
     }
     tokens.push(new Token('EOF', null))
-    for ( let tk of tokens ) {
-         console.log(tk)
-    }
     return tokens
 }
+
