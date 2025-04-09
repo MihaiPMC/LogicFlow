@@ -8,7 +8,10 @@ export function evaluateNode(node, variables, outputToConsole, MAX_ITERATIONS) {
     } 
     else if (node.type === 'INPUT') {
         let varName = node.value
-        let value = prompt(`Introdu valoarea pentru variabila ${varName}: `)
+        let value = prompt(`Introdu valoarea pentru variabila "${varName}": `)
+        if (isNaN(value)) {
+            throw new Error(`Valoarea introdusa pentru variabila "${varName}" nu este un numar valid!`)
+        }
         variables[varName] = parseFloat(value)
     } 
     else if (node.type === 'OUTPUT') {
@@ -56,7 +59,6 @@ export function evaluateNode(node, variables, outputToConsole, MAX_ITERATIONS) {
         let INITNode = FORNode.init
         let STEPNode = FORNode.increment
         variables[INITNode.value] = evaluatePostfixExpression(INITNode.children, variables)
-        console.log(variables)
         let count = 0
         while (evaluatePostfixExpression(FORNode.condition, variables)) {
             evaluateNode(FORNode.block, variables, outputToConsole, MAX_ITERATIONS);
