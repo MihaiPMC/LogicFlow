@@ -341,144 +341,70 @@ function shuntingYard(tokens) {
     return output
 }
 
-function parseDaca (tokens) {
-    let found_condition = false, found_then = false, found_else = false
-    let thenBlock = [], elseBlock = []
-    let condition = []
-    eatNewlines(tokens)
+function parseDaca(tokens) {
+    let condition = [];
+    let thenBlock = [];
+    let elseBlock = [];
+  
+    eatNewlines(tokens);
+    // Citim condiția până la token-ul "atunci" sau până la o acoladă
     while (tokens.length > 0 && tokens[0].value !== 'atunci' && tokens[0].type !== 'LBRACE') {
-        if (tokens[0].value === '=') {
-            tokens.shift() //Sari peste =
-            condition.push(new Token('OPERATOR', 'egal'))
-            continue
-        }
-        condition.push(tokens.shift())
+      if (tokens[0].value === '=') {
+        tokens.shift(); // Sărim peste '='
+        condition.push(new Token('OPERATOR', 'egal'));
+      } else {
+        condition.push(tokens.shift());
+      }
     }
-    found_condition = true
-    if (tokens[0].value === 'atunci') {
-        tokens.shift() //Sari peste atunci
-        // E posibil sa fie un if scris pe o linie: daca <conditie> atunci <instr1> altfel <instr2>
-        if (tokens[0].value !== '{') {
-            // Daca nu avem acolade, atunci avem doar o singura instructiune
-            thenBlock = []
-            let ifs = 1
-            eatNewlines(tokens)
-            while (tokens.length > 0 && ifs > 0 && tokens[0].type !== 'EOF' && tokens[0].value !== '\n') {
-                if (tokens[0].value === 'daca') 
-                    ifs ++
-                else if (tokens[0].value === 'altfel'){
-                    ifs --
-                    if (ifs === 0) {
-                        break
-                    }
-                }
-                thenBlock.push(tokens.shift())
-            }
-            found_then = true
-            eatNewlines(tokens)
-            if (tokens[0] && tokens[0].value === 'altfel' && tokens[1].value !== '{') {
-                tokens.shift() //Sari peste altfel
-                eatNewlines(tokens)
-                elseBlock = []
-                while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].type !== 'NEWLINE') {
-                    elseBlock.push(tokens.shift())
-                }
-                found_else = true
-            }
-        }
+  
+    // Partea "atunci"
+    if (tokens[0] && tokens[0].value === 'atunci') {
+      tokens.shift(); // Sărim peste "atunci"
+      eatNewlines(tokens);
+      if (tokens[0] && tokens[0].value !== '{') {
+        // Fără acolade → o singură instrucțiune (posibil imbricată)
+        thenBlock = parseSingleStatement(tokens);
+      } else if (tokens[0] && tokens[0].value === '{') {
+        tokens.shift(); // Sărim peste '{'
+        thenBlock = parseBracedBlock(tokens);
+      }
     }
-    if (!found_then) {
-        eatNewlines(tokens)
-        tokens.shift() //Sari peste {
-        eatNewlines(tokens)
-        thenBlock = []
-        let brackets = 1
-        while (tokens.length > 0 && brackets > 0 && tokens[0].type !== 'EOF' ) {
-            if (tokens[0].type === 'LBRACE') {
-                brackets ++
-            }
-            else if (tokens[0].type === 'RBRACE') {
-                brackets --
-            }
-            thenBlock.push(tokens.shift())
-        }
+  
+    eatNewlines(tokens);
+    // Partea "altfel", dacă există
+    if (tokens[0] && tokens[0].value === 'altfel') {
+      tokens.shift(); // Sărim peste "altfel"
+      eatNewlines(tokens);
+      if (tokens[0] && tokens[0].value !== '{') {
+        elseBlock = parseSingleStatement(tokens);
+      } else if (tokens[0] && tokens[0].value === '{') {
+        tokens.shift(); // Sărim peste '{'
+        elseBlock = parseBracedBlock(tokens);
+      }
     }
-    if (!found_else) {
-        eatNewlines(tokens)
-        elseBlock = []
-        if (tokens[0] && tokens[0].value === 'altfel') {
-            tokens.shift() //Sari peste altfel
-            eatNewlines(tokens)
-
-            // Putem avea un else fara acolade
-            if (tokens[0] && tokens[0].value !== '{') {
-                eatNewlines(tokens)
-                elseBlock = []
-                while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].type !== 'NEWLINE') {
-                    elseBlock.push(tokens.shift())
-                }
-            }
-            else {
-                tokens.shift() //Sari peste {
-                eatNewlines(tokens)
-                let brackets = 1
-                while (tokens.length > 0 && brackets > 0 && tokens[0].type !== 'EOF' ) {
-                    if (tokens[0].type === 'LBRACE') {
-                        brackets ++
-                    }
-                    else if (tokens[0].type === 'RBRACE') {
-                        brackets --
-                    }
-                    elseBlock.push(tokens.shift())
-                }
-            }
-        }
-    }
-    return {condition, thenBlock, elseBlock}
+    return { condition, thenBlock, elseBlock };
 }
 
-function parseCatTimp (tokens) {
-    let found_condition = false, found_then = false
-    let condition = []
-    let thenBlock = []
-    eatNewlines(tokens)
+function parseCatTimp(tokens) {
+    let condition = [];
+    let thenBlock = [];
+  
+    eatNewlines(tokens);
+    // Citim condiția până la token-ul "executa" sau o acoladă
     while (tokens.length > 0 && tokens[0].value !== 'executa' && tokens[0].type !== 'LBRACE') {
-        condition.push(tokens.shift())
+      condition.push(tokens.shift());
     }
-    found_condition = true
-
-    if (tokens[0].value === 'executa') {
-        tokens.shift() //Sari peste executa
-        eatNewlines(tokens)
-        // E posibil sa fie un while scris pe o linie: cat_timp <conditie> executa <instr1>
-        if (tokens[0].value !== '{') {
-            // Daca nu avem acolade, atunci avem doar o singura instructiune
-            thenBlock = []
-            while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].value !== '\n') {
-                thenBlock.push(tokens.shift())
-            }
-            found_then = true
-        }
+    if (tokens[0] && tokens[0].value === 'executa') {
+      tokens.shift(); // Sărim peste "executa"
+      eatNewlines(tokens);
+      if (tokens[0] && tokens[0].value !== '{') {
+        thenBlock = parseSingleStatement(tokens);
+      } else if (tokens[0] && tokens[0].value === '{') {
+        tokens.shift(); // Sărim peste '{'
+        thenBlock = parseBracedBlock(tokens);
+      }
     }
-    if(tokens[0].value === '{' && !found_then) {
-        tokens.shift() //Sari peste {
-        eatNewlines(tokens)
-        thenBlock = []
-        let brackets = 1
-        while (tokens.length > 0 && brackets > 0 && tokens[0].type !== 'EOF' ) {
-            if (tokens[0].type === 'LBRACE') {
-                brackets ++
-            }
-            else if (tokens[0].type === 'RBRACE') {
-                brackets --
-                if (brackets === 0) {
-                    break
-                }
-            }
-            thenBlock.push(tokens.shift())
-        }
-    }
-    return {condition, thenBlock}
+    return { condition, thenBlock };
 }
 
 function parsePentru (tokens) {
@@ -620,61 +546,61 @@ function parseBracedBlock(tokens) {
 }
 
 function parseStatement(tokens) {
-    let block = [];
-    if (tokens.length === 0) return block;
+    let block = []
+    if (tokens.length === 0) return block
 
-    let token = tokens[0];
+    let token = tokens[0]
 
     if (isBlockKeyword(token.value)) {
-        let keyword = tokens.shift(); // Consumă cuvântul cheie
-        let statement = [];
+        let keyword = tokens.shift() // Consumă cuvântul cheie
+        let statement = []
         
         if (keyword.value === 'pentru') {
-            statement = getPentru(tokens);
+            statement = getPentru(tokens)
         }
         else if (keyword.value === 'daca') {
-            statement = getDaca(tokens);
+            statement = getDaca(tokens)
         }
         else if (keyword.value === 'cat timp') {
-            statement = getCatTimp(tokens);
+            statement = getCatTimp(tokens)
         }
         else if (keyword.value === 'repeta') {
-            statement = getRepeta(tokens);
+            statement = getRepeta(tokens)
         }
 
-        block.push(...statement);
+        block.push(...statement)
     } else {
         // Citim o instrucțiune simplă până la sfârșitul liniei sau până la începutul unei noi structuri
         while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].value !== '\n' && !isBlockKeyword(tokens[0].value)) {
-            block.push(tokens.shift());
+            block.push(tokens.shift())
         }
     }
 
-    eatNewlines(tokens);
-    return block;
+    eatNewlines(tokens)
+    return block
 }
 
 function isBlockKeyword(value) {
-    return ['daca', 'cat timp', 'pentru', 'repeta'].includes(value);
+    return ['daca', 'cat timp', 'pentru', 'repeta'].includes(value)
 }
 
 function parseSingleStatement(tokens) {
-    let block = [];
+    let block = []
 
-    if (tokens.length === 0) return block;
+    if (tokens.length === 0) return block
 
-    let token = tokens[0];
+    let token = tokens[0]
 
     if (isBlockKeyword(token.value)) {
         // Dacă e un bloc, îl parsează complet
-        return parseStatement(tokens);
+        return parseStatement(tokens)
     } else {
         // Citim doar prima instrucțiune de pe linie
         while (tokens.length > 0 && tokens[0].type !== 'EOF' && tokens[0].value !== '\n' && !isBlockKeyword(tokens[0].value)) {
-            block.push(tokens.shift());
+            block.push(tokens.shift())
         }
     }
 
-    eatNewlines(tokens);
-    return block;
+    eatNewlines(tokens)
+    return block
 }
